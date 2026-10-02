@@ -51,3 +51,20 @@ PRZEWODNIK_STRON_NA_KAWALEK = int(os.environ.get("PRZEWODNIK_STRON_NA_KAWALEK", 
 # ze śladów testów w etapie 4.
 SZUKAJ_LIMIT_TRAFIEN = int(os.environ.get("SZUKAJ_LIMIT_TRAFIEN", "20"))
 CZYTAJ_LIMIT_STRON = int(os.environ.get("CZYTAJ_LIMIT_STRON", "5"))
+
+# Agent (etap 4). Modele wybieramy na testach; start od taniego.
+ORKIESTRATOR_MODEL = os.environ.get("ORKIESTRATOR_MODEL") or "gpt-5.4-mini"
+SUBAGENT_MODEL = os.environ.get("SUBAGENT_MODEL") or "gpt-5.4-mini"
+# Budżet: ile rund wywołań narzędzi, zanim kod każe odpowiedzieć z tym, co
+# jest. Luźny na start — właściwy ustalimy ze śladów (proces.md, „Otwarte").
+ORKIESTRATOR_LIMIT_RUND = int(os.environ.get("ORKIESTRATOR_LIMIT_RUND", "6"))
+SUBAGENT_LIMIT_RUND = int(os.environ.get("SUBAGENT_LIMIT_RUND", "12"))
+
+# Ceny za 1M tokenów (wejście, wejście z cache, wyjście) — tylko do raportu
+# kosztu w testach. Model spoza tabeli: koszt nieznany, liczymy same tokeny.
+CENY = {
+    "gpt-5.4-mini": (0.75, 0.075, 4.50),
+    # gpt-5.4: tylko cena wejścia z cennika ($2,50); cache i wyjście do
+    # potwierdzenia — przyjęte w tej samej proporcji co mini (×1/10, ×6).
+    "gpt-5.4": (2.50, 0.25, 15.00),
+}

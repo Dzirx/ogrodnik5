@@ -16,7 +16,8 @@
 #   nie_wolno  - to, czego w odpowiedzi być nie może (zmyślenie, wiedza spoza książki)
 #   pokrycie   - dla pytań szerokich: tematy z ich stronami; mierzymy, ile weszło
 #
-# Wszystkie wartości sprawdzone w oryginale (pdftotext), 2026-10-01.
+# Wszystkie wartości sprawdzone w oryginale (pdftotext), 2026-10-01; poprawione
+# po pełnym tekście z OCR 2026-10-02 (kiedy-siac, artykul-rozsada, lista-chorob).
 
 - id: ph-podloza
   rodzaj: konkret
@@ -46,15 +47,18 @@
   strony: [30]
 
 - id: kiedy-siac
-  rodzaj: brak
+  rodzaj: granica
   pytanie: Kiedy siać pomidory na rozsadę?
   musi:
-    - "książka nie podaje miesiąca siewu"
-    - "produkcja rozsady trwa 30–45 dni"
+    - "połowa marca pod osłonami, koniec marca w gruncie (s. 17)"
+    - "produkcja rozsady: 30–45 dni (s. 4) albo 35–60 dni (s. 17)"
     - "wysadza się przy małym ryzyku przymrozków i glebie ogrzanej do 12–13°C"
-  strony: [4, 23]
-  nie_wolno: ["konkretny miesiąc (luty, marzec, kwiecień)", "zimna Zośka albo data majowa"]
-  uwagi: Najważniejszy test na dopisywanie wiedzy spoza książki.
+  strony: [4, 17, 23]
+  nie_wolno: ["miesiąc spoza książki (luty, kwiecień)", "zimna Zośka albo data majowa"]
+  uwagi: >
+    Do 2026-10-02 test rodzaju "brak" ("książka nie podaje miesiąca"). Pełny
+    tekst z OCR pokazał termin na s. 17 (pdftotext go nie widział), więc
+    test sprawdza teraz zebranie terminu z trzech stron.
 
 - id: obcinanie-czubkow
   rodzaj: laik
@@ -93,7 +97,8 @@
   strony: [13, 39]
   uwagi: >
     Nadmanganian stoi na s. 39, w rozdziale o mozaice, a nie przy zaprawianiu.
-    Mapa (ksiazka.md) go tam NIE wskazuje - test sprawdza, czy model szuka poza mapą.
+    Przewodnik z modelu (2026-10-02) ma słowo "nadmanganianu" przy s. 39, ale
+    pod mozaiką - test sprawdza, czy model łączy dwa rozdziały.
 
 - id: mozaika-profilaktyka
   rodzaj: granica
@@ -157,7 +162,7 @@
   rodzaj: szerokie
   pytanie: Napisz artykuł o produkcji rozsady pomidorów.
   pokrycie:
-    - {temat: "czas produkcji rozsady 30–45 dni", strony: [4]}
+    - {temat: "czas produkcji rozsady 30–45 dni (s. 4), 35–60 dni (s. 17)", strony: [4, 17]}
     - {temat: "zaprawianie nasion", strony: [13]}
     - {temat: "podłoże", strony: [14, 15, 16]}
     - {temat: "światło i temperatura", strony: [17, 18]}
@@ -184,7 +189,8 @@
     - {temat: "sucha zgnilizna wierzchołkowa", strony: [33]}
     - {temat: "brak zawiązywania owoców", strony: [34]}
     - {temat: "opadanie kwiatów i zawiązków", strony: [35]}
-    - {temat: "nierównomierne wybarwianie owoców", strony: [35]}
+    - {temat: "przeazotowanie, niedobór światła", strony: [35]}
+    - {temat: "nierównomierne dojrzewanie owoców powyżej 30°C", strony: [31]}
     - {temat: "mozaika tytoniowa", strony: [36]}
     - {temat: "zgorzel siewek", strony: [40]}
     - {temat: "zaraza ziemniaczana", strony: [42]}

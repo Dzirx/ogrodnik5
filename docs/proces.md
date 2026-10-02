@@ -1,6 +1,6 @@
 # Ogrodnik 5 — jak działa
 
-Stan: etap 1 (wgrywanie) gotowy, następny etap 2. Ustalenia z 1–2 października 2026.
+Stan: etapy 0–4 zrobione (etap 4 bez pytań do drugiej książki), następny etap 5. Ustalenia z 1–2 października 2026.
 
 ## Zasada
 
@@ -334,6 +334,39 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
 - Kryterium planu „`szukaj("ogławianie")` trafia w s. 12 i 28" jest
   nieścisłe: dosłownie słowo stoi na s. 11 i 28; s. 12 ma „ogławiające",
   które trafia rdzeń „ogław". Test sprawdza oba przypadki.
+
+## Ustalone przy etapie 4 (2026-10-02)
+
+- Agent: `app/agent/agent.py` (orkiestrator + subagent), `petla.py` (pętla
+  narzędzi, budżet rund, ślad), CLI `python -m app.agent --ksiazki … "pytanie"`
+  (`--slad plik.json`). Orkiestrator ma `zapytaj_ksiazke(ksiazka, zadanie)`
+  i `poza_zakresem`; wywołania z jednej rundy idą równolegle. Pierwsza runda
+  orkiestratora i subagenta wymusza narzędzie (bez tego model mógłby
+  odpowiedzieć z własnej wiedzy, nie zaglądając do książki).
+- Testy: `python testy/uruchom.py testy/sulek.yaml --ksiazki sulek-pomidory`
+  → `testy/wyniki/<data>/raport.md` + `slady/`. Ocenia człowiek (albo
+  subagent Claude Code na prośbę) — skrypt niczego nie punktuje.
+- Modele: orkiestrator i subagent `gpt-5.4-mini` (w `.env`). Subagent
+  `gpt-5.4` porównany na 5 trudnych testach: naprawił jeden (dwie
+  temperatury s. 31 i 34), w pytaniach szerokich nie był lepszy, a był 3–4×
+  droższy i wolniejszy.
+- Czas i koszt (`gpt-5.4-mini`, Sułek): pytanie 5–10 s, ok. $0,01–0,02;
+  artykuł / post / lista 13–20 s, ok. $0,03–0,05. 20 testów ≈ $0,37.
+- Budżet: przy limitach 6 rund orkiestratora / 12 subagenta nigdzie nie
+  wyczerpany; maksimum 3 / 5. Zostaje luźny — na jednej cienkiej książce
+  nie ma podstaw go obniżać; wrócić przy grubej książce i wielu książkach.
+- Po pierwszym przebiegu poprawki promptów (z oceny odpowiedzi):
+  orkiestrator przenosi każdą liczbę i warunek od pomocnika, znacznik przy
+  fakcie, „nie ma w zaznaczonych" tylko gdy naprawdę nie ma, bez „Jeśli
+  chcesz…" i podsumowań; subagent szuka rdzeniami, czyta każdą stronę
+  z liczbą, stronę podaje tylko z przeczytanego tekstu, zachowuje tryb autora
+  („utrudnia", nie „nie zawiązuje"). Efekt: obcinanie-czubkow i
+  podlewanie-kroplowe pełne, „Jeśli chcesz…" z 6 do 1 odpowiedzi.
+- Znany błąd: temperatura-zawiazywania z `gpt-5.4-mini` czyta tylko s. 34
+  (przewodnik przypisuje tam zawiązywanie) i pomija „poniżej 14°" z s. 31.
+- Testy poprawione po pełnym tekście z OCR: kiedy-siac (s. 17 podaje marzec
+  — to już nie test „brak"), artykul-rozsada (dwa czasy rozsady),
+  lista-chorob („wybarwianie" z s. 35 nie istnieje w tekście).
 
 ## Otwarte
 
