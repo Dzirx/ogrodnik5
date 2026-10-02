@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+sqlalchemy
+openai
+pymupdf==1.25.1
+pyyaml
+pytest

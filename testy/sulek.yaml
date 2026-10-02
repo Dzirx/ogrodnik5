@@ -1,0 +1,209 @@
+# Pytania testowe do książki sulek-pomidory.
+#
+# Klient nie wie z góry, o co zapyta, więc to nie jest lista jego pytań.
+# Każde pytanie sprawdza jedną WŁAŚCIWOŚĆ, której potrzebuje każde pytanie:
+#   konkret        - liczba z warunkiem, z właściwej strony
+#   laik           - słowa pytającego inne niż słowa książki
+#   granica        - odpowiedź rozłożona na kilka stron albo rozdziałów
+#   dwie-wartosci  - książka podaje dwie wartości w różnych warunkach (to nie spór)
+#   brak           - książka tego nie mówi; poprawna odpowiedź to "nie ma"
+#   szerokie       - artykuł, post, lista; liczy się pokrycie tematów
+#   doprecyzowanie - drugie pytanie zależy od pierwszego
+#
+# Pola:
+#   musi       - fakty, które odpowiedź musi zawierać (sprawdza człowiek albo model-sędzia)
+#   strony     - strony oryginału, z których cytat jest poprawny
+#   nie_wolno  - to, czego w odpowiedzi być nie może (zmyślenie, wiedza spoza książki)
+#   pokrycie   - dla pytań szerokich: tematy z ich stronami; mierzymy, ile weszło
+#
+# Wszystkie wartości sprawdzone w oryginale (pdftotext), 2026-10-01.
+
+- id: ph-podloza
+  rodzaj: konkret
+  pytanie: Jakie pH powinno mieć podłoże do siewu pomidorów?
+  musi: ["pH 6,0–6,5", "ziemia inspektowa albo odkwaszony torf wysoki"]
+  strony: [14]
+
+- id: rozstaw
+  rodzaj: konkret
+  pytanie: W jakim rozstawie sadzić pomidory?
+  musi:
+    - "80 x 40 cm dla odmian wcześniejszych prowadzonych przy palikach lub drutach"
+    - "100 x 80 cm dla odmian późniejszych"
+  strony: [23]
+  nie_wolno: ["jeden rozstaw bez rozróżnienia odmian"]
+
+- id: temperatura-rozsady
+  rodzaj: konkret
+  pytanie: W jakiej temperaturze trzymać rozsadę pomidorów?
+  musi: ["18–20°C w dzień", "12–15°C w nocy"]
+  strony: [20]
+
+- id: podlewanie-kroplowe
+  rodzaj: konkret
+  pytanie: Jak często podlewać pomidory linią kroplującą?
+  musi: ["raz na 3–4 dni", "przez godzinę", "konewką lub wężem częściej"]
+  strony: [30]
+
+- id: kiedy-siac
+  rodzaj: brak
+  pytanie: Kiedy siać pomidory na rozsadę?
+  musi:
+    - "książka nie podaje miesiąca siewu"
+    - "produkcja rozsady trwa 30–45 dni"
+    - "wysadza się przy małym ryzyku przymrozków i glebie ogrzanej do 12–13°C"
+  strony: [4, 23]
+  nie_wolno: ["konkretny miesiąc (luty, marzec, kwiecień)", "zimna Zośka albo data majowa"]
+  uwagi: Najważniejszy test na dopisywanie wiedzy spoza książki.
+
+- id: obcinanie-czubkow
+  rodzaj: laik
+  pytanie: Kiedy obcinać czubki pomidorom?
+  musi:
+    - "na początku sierpnia, za trzecim liściem nad ostatnim kwiatostanem"
+    - "odmiany wysokie: w tunelu nad 5–6 gronem, w gruncie nad 3–4 gronem"
+    - "koniec uprawy 6–8 tygodni po ogłowieniu"
+  strony: [12, 28]
+  uwagi: Książka mówi "ogławianie" / "ścięcie stożka". Odpowiedź z jednej strony jest niepełna.
+
+- id: wilki
+  rodzaj: laik
+  pytanie: Co robić z małymi pędami, które wyrastają między liściem a łodygą?
+  musi: ["to pędy boczne, tzw. wilki", "usuwać, zanim osiągną 10 cm"]
+  strony: [26, 27, 12]
+
+- id: plamy-na-owocach
+  rodzaj: laik
+  pytanie: Na końcach owoców pomidora pojawiają się czarne, wklęsłe plamy. Co robić?
+  musi:
+    - "sucha zgnilizna wierzchołkowa"
+    - "podnieść pH gleby do około 6,0 (kreda)"
+    - "oprysk 0,5% roztworem saletry wapniowej, wieczorem"
+    - "równomierne podlewanie"
+    - "w tunelu wentylacja i zacienianie"
+  strony: [33]
+
+- id: odkazanie-nasion
+  rodzaj: granica
+  pytanie: Czym odkazić nasiona pomidora przed siewem?
+  musi:
+    - "kupione w oryginalnych opakowaniach od renomowanych firm są już zaprawione"
+    - "Polyversum, EM Multi Grower"
+    - "nadmanganian potasu 1%, 50 minut"
+  strony: [13, 39]
+  uwagi: >
+    Nadmanganian stoi na s. 39, w rozdziale o mozaice, a nie przy zaprawianiu.
+    Mapa (ksiazka.md) go tam NIE wskazuje - test sprawdza, czy model szuka poza mapą.
+
+- id: mozaika-profilaktyka
+  rodzaj: granica
+  pytanie: Jak zapobiegać mozaice tytoniowej na pomidorach?
+  musi:
+    - "chorób wirusowych nie da się wyleczyć; porażone rośliny usunąć i spalić"
+    - "dezynfekcja narzędzi, ubrań i gleby"
+    - "zwalczanie mszyc i wciornastków"
+    - "oprysk 10% roztworem mleka po usuwaniu pędów bocznych"
+  strony: [36, 39]
+  uwagi: Strony 37–38 to zdjęcia bez tekstu; dalsza część profilaktyki jest dopiero na 39.
+
+- id: podloze-rozsady
+  rodzaj: granica
+  pytanie: Jakie podłoże wybrać do produkcji rozsady pomidorów?
+  musi:
+    - "ziemia inspektowa albo substrat z odkwaszonego torfu wysokiego, pH 6,0–6,5"
+    - "z perlitem albo piaskiem; sterylne"
+    - "dobre podłoże jest puszyste i jasne"
+  strony: [14, 15, 16]
+
+- id: temperatura-zawiazywania
+  rodzaj: dwie-wartosci
+  pytanie: Poniżej jakiej temperatury pomidor nie zawiązuje owoców?
+  musi:
+    - "s. 31: poniżej 14° pomidor nie zawiązuje owoców"
+    - "s. 34: średnia dobowa poniżej 16°C w czasie kwitnienia (oraz powyżej 30°C) utrudnia zawiązywanie"
+    - "obie wartości, każda ze swoim znaczeniem"
+  strony: [31, 34]
+  nie_wolno: ["jedna wartość bez drugiej", "przedstawienie tego jako sprzeczności"]
+  uwagi: >
+    To NIE jest sprzeczność: chwilowa temperatura kontra średnia dobowa,
+    "nie zawiązuje" kontra "utrudnia". Test sprawdza, czy model widzi
+    różnicę warunków, zamiast zgłaszać spór albo zlewać obie w jedną liczbę.
+
+- id: dawka-signum
+  rodzaj: brak
+  pytanie: Jaka jest dawka środka Signum na hektar?
+  musi: ["książka nie podaje dawki", "wspomina Signum przy zarazie ziemniaczanej, zalecając najpierw Trichodermę"]
+  strony: [43]
+  nie_wolno: ["jakakolwiek dawka liczbowa"]
+
+- id: dawki-npk
+  rodzaj: brak
+  pytanie: Ile nawozu NPK dawać pomidorom co tydzień?
+  musi:
+    - "autorka celowo nie podaje dawek; dawka zależy od żyzności gleby"
+    - "zaleca badanie gleby w OSChR (ok. 13 zł) z planem nawozowym"
+  strony: [47, 49]
+  nie_wolno: ["konkretna dawka NPK"]
+  uwagi: Wolno dodać ogólne zalecenia organiczne z s. 48, ale z warunkiem etapu uprawy.
+
+- id: papryka
+  rodzaj: brak
+  pytanie: Jak uprawiać paprykę w tunelu?
+  musi: ["książka jest o pomidorze; o papryce nic nie mówi"]
+  strony: []
+  nie_wolno: ["przeniesienie zaleceń dla pomidora na paprykę"]
+
+- id: artykul-rozsada
+  rodzaj: szerokie
+  pytanie: Napisz artykuł o produkcji rozsady pomidorów.
+  pokrycie:
+    - {temat: "czas produkcji rozsady 30–45 dni", strony: [4]}
+    - {temat: "zaprawianie nasion", strony: [13]}
+    - {temat: "podłoże", strony: [14, 15, 16]}
+    - {temat: "światło i temperatura", strony: [17, 18]}
+    - {temat: "sposób wysiewu", strony: [19]}
+    - {temat: "pikowanie i temperatura rozsady", strony: [20]}
+    - {temat: "hartowanie, jak wygląda dobra rozsada", strony: [21]}
+    - {temat: "typowe błędy", strony: [22]}
+  nie_wolno: ["miesiąc siewu", "zalecenia spoza książki"]
+
+- id: post-tunel
+  rodzaj: szerokie
+  pytanie: Przygotuj post na Facebooka o najczęstszych błędach w uprawie pomidorów w tunelu.
+  pokrycie:
+    - {temat: "wentylacja: tunel otwarty od połowy maja do końca sierpnia, bez zamykania na noc", strony: [31]}
+    - {temat: "temperatura w tunelu: nie ponad 30°C w dzień, nie poniżej 16°C w nocy", strony: [34]}
+    - {temat: "sucha zgnilizna przy upałach w tunelu", strony: [33]}
+    - {temat: "małe tunele i brak zapylania", strony: [34]}
+  nie_wolno: ["emotki i hasztagi (wymóg formy postu)"]
+
+- id: lista-chorob
+  rodzaj: szerokie
+  pytanie: Wypisz choroby i problemy pomidora opisane w książce.
+  pokrycie:
+    - {temat: "sucha zgnilizna wierzchołkowa", strony: [33]}
+    - {temat: "brak zawiązywania owoców", strony: [34]}
+    - {temat: "opadanie kwiatów i zawiązków", strony: [35]}
+    - {temat: "nierównomierne wybarwianie owoców", strony: [35]}
+    - {temat: "mozaika tytoniowa", strony: [36]}
+    - {temat: "zgorzel siewek", strony: [40]}
+    - {temat: "zaraza ziemniaczana", strony: [42]}
+    - {temat: "plamistość widmowa", strony: [45]}
+
+- id: zaraza-chemicznie
+  rodzaj: doprecyzowanie
+  rozmowa:
+    - Jak zapobiegać zarazie ziemniaczanej na pomidorach?
+    - a chemicznie?
+  musi:
+    - "drugie pytanie dotyczy zarazy ziemniaczanej, nie ochrony w ogóle"
+    - "Signum; ale najpierw Trichoderma"
+  strony: [42, 43]
+
+- id: rozstaw-pozne
+  rodzaj: doprecyzowanie
+  rozmowa:
+    - W jakim rozstawie sadzić pomidory?
+    - a te późne?
+  musi: ["100 x 80 cm"]
+  strony: [23]
