@@ -37,3 +37,12 @@ AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "")
 # Odczyt tabel z obrazu strony (dwa wywołania na stronę). W ogrodnik4 szedł
 # modelem odpowiedzi i na nim mierzono s. 8 programu ochrony (6/6 wpisów).
 TABELE_MODEL = os.environ.get("TABELE_MODEL") or ANSWER_MODEL or "gpt-4o"
+
+# Przewodnik ksiazka.md: jedno wywołanie na książkę (albo na kawałek
+# grubej książki). Porównanie na Sułku 2026-10-02: gpt-4o-mini przesuwał
+# mapę stron i zmyślał słowa, gpt-4.1 sklejał 14 stron w wiersz, gpt-5.5
+# najdokładniejszy, gpt-5.4-mini prawie tak samo dobry za ułamek ceny.
+PRZEWODNIK_MODEL = os.environ.get("PRZEWODNIK_MODEL") or "gpt-5.4-mini"
+# Ile stron idzie do jednego wywołania. Zmierzone tylko na książkach
+# do ~110 stron — dla grubej książki do sprawdzenia (proces.md, „Otwarte").
+PRZEWODNIK_STRON_NA_KAWALEK = int(os.environ.get("PRZEWODNIK_STRON_NA_KAWALEK", "300"))

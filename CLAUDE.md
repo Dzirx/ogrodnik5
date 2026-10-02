@@ -20,13 +20,17 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
   `python -m app.ingest`. Wgrane: 5 książek testowych + notatka testowa;
   wszystkie 56 stron z tabelą mają blok z modelu, s. 8 programu gruntowego
   6/6 ze wzorcem.
-- Następny krok: etap 2 (przewodnik `ksiazka.md`).
+- Etap 2 w toku: `app/ingest/przewodnik.py`, model z `.env`
+  (`gpt-5.4-mini`). Przewodniki są dla wszystkich książek: Sułek —
+  `gpt-5.4-mini`, pozostałe — `gpt-5.5` (z porównania modeli). Zostało:
+  przegląd przewodników przez człowieka.
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
-  `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`. Pozostałe zmienne
-  z ogrodnik4 usunięte.
-- Wzorzec przewodnika: `data/zrodla/sulek-pomidory/ksiazka.md` (ręczny,
-  z samego pdftotext — do poprawy po etapie 1).
+  `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane
+  `PRZEWODNIK_MODEL=gpt-5.4-mini`. Pozostałe zmienne z ogrodnik4 usunięte.
+  Lista wszystkich zmiennych: `.env.example`.
+- Ręczny wzorzec przewodnika (historia, z samego pdftotext, ma błędy):
+  `data/zrodla/sulek-pomidory/ksiazka.wzorzec-reczny.md`. Agent go nie czyta.
 - Pytania testowe: `testy/sulek.yaml`.
 - Książki testowe: `~/projekt/ogrodnik4/_tab/*.pdf` (materiały klienta —
   nie do repozytorium).

@@ -54,7 +54,9 @@ Nie zawiera treści książki, tylko drogę do niej:
 - **Pułapki** — rozdziały przechodzące przez strony, strony ze zdjęciami,
   osobiste rekomendacje autora.
 
-Wzorzec: `data/zrodla/sulek-pomidory/ksiazka.md` (napisany ręcznie).
+Pierwszy wzorzec napisany ręcznie:
+`data/zrodla/sulek-pomidory/ksiazka.wzorzec-reczny.md` (z samego pdftotext,
+ma błędy). Od 2026-10-02 `ksiazka.md` Sułka to przewodnik z `gpt-5.4-mini`.
 Redaktor może przewodnik poprawić.
 
 ## Pytanie
@@ -292,6 +294,28 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   przyczyna porażki (np. `RateLimitError: …`). Wtedy w pliku strony jest
   surowa warstwa — wystarczy `--przetworz`. Opisu poprawek modelu 2
   (`poprawki`) świadomie nie zapisujemy.
+
+## Ustalone przy etapie 2 (2026-10-02)
+
+- Przewodnik: `python -m app.ingest.przewodnik <id>` (`--nadpisz`,
+  `--wyjscie`). Istniejącego `ksiazka.md` nie nadpisuje bez `--nadpisz` —
+  mógł go poprawić redaktor.
+- Model przewodnika: `PRZEWODNIK_MODEL`, domyślnie `gpt-5.4-mini`
+  ($0,75 / $4,50 za 1M tokenów wejścia / wyjścia, ok. 3 centy za książkę
+  do 110 stron). Porównanie na Sułku (sprawdzone w tekście stron):
+  `gpt-4o-mini` przesuwał mapę od s. 29 i zmyślał („brak GMO", tabela na
+  s. 11, słowa spoza książki); `gpt-4.1` trafny, ale sklejał s. 33–46 w jeden
+  wiersz (stary prompt); `gpt-5.5` — mapa zgodna w 30/30 wierszach, ale
+  drogi; `gpt-5.4-mini` — mapa trafna, nieco szersze wiersze, mniej słów.
+  Przewodniki wygenerowane 2026-10-02 przez `gpt-5.5` zostają (wszystkie
+  książki poza Sułkiem); Sułek — `gpt-5.4-mini`.
+- Wzorca Sułka nie dajemy modelowi jako przykładu — przepisałby jego tematy.
+- Kolumna „Szukaj też jako": pojedyncze słowa albo rdzenie („pikow",
+  „zapraw"), nie frazy — łamanie linii i OCR rozbijają frazy w tekście.
+  Po tej zmianie 98–100% słów stoi dosłownie w tekście książek.
+- Ręczny wzorzec ma błędy względem pełnego tekstu (np. s. 3 to gleba, nie
+  rozsada; s. 35 bez „wybarwiania"; słowa w formie słownikowej, których grep
+  nie trafi: „przepikowanie", „hartowanie", „przymrozki").
 
 ## Otwarte
 
