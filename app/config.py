@@ -46,3 +46,8 @@ PRZEWODNIK_MODEL = os.environ.get("PRZEWODNIK_MODEL") or "gpt-5.4-mini"
 # Ile stron idzie do jednego wywołania. Zmierzone tylko na książkach
 # do ~110 stron — dla grubej książki do sprawdzenia (proces.md, „Otwarte").
 PRZEWODNIK_STRON_NA_KAWALEK = int(os.environ.get("PRZEWODNIK_STRON_NA_KAWALEK", "300"))
+
+# Limity narzędzi agenta (etap 3). Luźne na start — właściwe ustalimy
+# ze śladów testów w etapie 4.
+SZUKAJ_LIMIT_TRAFIEN = int(os.environ.get("SZUKAJ_LIMIT_TRAFIEN", "20"))
+CZYTAJ_LIMIT_STRON = int(os.environ.get("CZYTAJ_LIMIT_STRON", "5"))

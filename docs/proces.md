@@ -317,6 +317,24 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   rozsada; s. 35 bez „wybarwiania"; słowa w formie słownikowej, których grep
   nie trafi: „przepikowanie", „hartowanie", „przymrozki").
 
+## Ustalone przy etapie 3 (2026-10-02)
+
+- Narzędzia: `app/agent/narzedzia.py`; zakres to parametr `Zakres` ustawiany
+  przez kod, książka spoza niego daje `{"blad": ...}`, nie treść.
+- `szukaj` w czystym Pythonie zamiast ripgrep (lokalnie brak `rg`, a tak
+  testy działają wszędzie). Zachowanie jak grep: dosłowna fraza, bez
+  wielkości liter, bez odmiany. Białe znaki złączone, więc fraza przełamana
+  końcem linii też trafia. Wynik: strona, liczba trafień na stronie
+  i fragment ±200 znaków wokół pierwszego (okno znaków, nie linijki —
+  tabela z modelu to jedna długa linia na pole).
+- Limity w `.env`: `SZUKAJ_LIMIT_TRAFIEN=20` stron, `CZYTAJ_LIMIT_STRON=5`;
+  przy przekroczeniu narzędzie mówi, ile pominęło i skąd czytać dalej.
+- `czytaj_strony` dopisuje przy stronie „tabela odczytana automatycznie"
+  albo „część tekstu z OCR".
+- Kryterium planu „`szukaj("ogławianie")` trafia w s. 12 i 28" jest
+  nieścisłe: dosłownie słowo stoi na s. 11 i 28; s. 12 ma „ogławiające",
+  które trafia rdzeń „ogław". Test sprawdza oba przypadki.
+
 ## Otwarte
 
 - Budżet pętli — trudno powiedzieć z góry. Zaczynamy od luźnego limitu

@@ -43,7 +43,7 @@ repozytorium (`data/` w `.gitignore`).
   ```
 - `requirements.txt`: fastapi, uvicorn, jinja2, python-multipart, sqlalchemy,
   openai, pymupdf, pyyaml, pytest.
-- `Dockerfile`: python:3.12-slim + `tesseract-ocr tesseract-ocr-pol` + `ripgrep`.
+- `Dockerfile`: python:3.12-slim + `tesseract-ocr tesseract-ocr-pol` (ripgrep niepotrzebny — `szukaj` w Pythonie, patrz `proces.md`, etap 3).
 - `.env`: klucz OpenAI przepisuje człowiek (z ogrodnik4 albo nowy).
 
 **Gotowe, gdy:** `docker build` przechodzi, `pytest` uruchamia się (pusto).
@@ -101,7 +101,7 @@ Zwykłe funkcje Pythona, bez modelu, każda z testem:
 
 | Narzędzie | Zachowanie |
 |-----------|------------|
-| `szukaj(fraza, ksiazki?)` | ripgrep po `strony/*.txt` zakresu, bez rozróżniania wielkości liter; książka, strona, 2–3 linijki kontekstu; limit trafień z informacją „jest więcej" |
+| `szukaj(fraza, ksiazki?)` | dosłowne szukanie (w Pythonie, jak grep) po `strony/*.txt` zakresu, bez rozróżniania wielkości liter; książka, strona, fragment wokół trafienia; limit trafień z informacją „jest więcej" |
 | `czytaj_strony(ksiazka, od, do)` | tekst stron ze znacznikami numerów; limit stron na wywołanie |
 | `przewodnik(ksiazka)` | treść `ksiazka.md` |
 | `poza_zakresem(fraza)` | tytuły i numery stron trafień poza zakresem, bez tekstu |

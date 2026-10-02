@@ -14,7 +14,7 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
 ## Stan
 
 - Etap 0 gotowy (2026-10-02): git, `app/`, `requirements.txt`, `Dockerfile`
-  (build przechodzi), `pytest`. Lokalnie `.venv/`; brak `rg` poza Dockerem.
+  (build przechodzi), `pytest`. Lokalnie `.venv/`.
 - Etap 1 gotowy (2026-10-02): parsowanie przeniesione (`app/ingest/strony.py`,
   `ocr.py`, `tabele.py`), zapis `app/ingest/zapis.py`, CLI
   `python -m app.ingest`. Wgrane: 5 książek testowych + notatka testowa;
@@ -24,6 +24,9 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
   (`gpt-5.4-mini`). Przewodniki są dla wszystkich książek: Sułek —
   `gpt-5.4-mini`, pozostałe — `gpt-5.5` (z porównania modeli). Zostało:
   przegląd przewodników przez człowieka.
+- Etap 3 gotowy (2026-10-02): `app/agent/narzedzia.py` — szukaj,
+  czytaj_strony, przewodnik, poza_zakresem; testy, w tym na Sułku.
+- Następny krok: etap 4 (subagent, orkiestrator, testy z `testy/sulek.yaml`).
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
   `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane

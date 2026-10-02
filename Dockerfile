@@ -1,9 +1,8 @@
 FROM python:3.12-slim
 
 # Tesseract z polskim słownikiem — skany i strony z tekstem tylko w obrazie.
-# ripgrep — narzędzie szukaj() agenta grepuje strony książek.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-pol ripgrep \
+ && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-pol \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/app
