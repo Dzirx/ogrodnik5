@@ -117,3 +117,50 @@ def przetworz(id: str) -> dict:
     meta["status"] = "strony" if not (kat / "ksiazka.md").exists() else "gotowa"
     _zapisz_meta(id, meta)
     return meta
+
+
+def zapisz_meta(id: str, meta: dict) -> None:
+    _zapisz_meta(id, meta)
+
+
+def utworz(tytul: str, autor: str = "", kategorie: list[str] | None = None,
+           pdf: bytes | None = None, tekst: str | None = None) -> str:
+    """Książka z panelu: sam oryginał i meta, bez przetwarzania.
+
+    Tekst stron, OCR, tabele i przewodnik to minuty — robi je proces roboczy
+    (app/worker.py), a panel od razu wraca do listy ze statusem „czeka"."""
+    if not pdf and not (tekst and tekst.strip()):
+        raise ValueError("podaj plik PDF albo tekst")
+    id = _nowe_id(tytul)
+    with _nowa_ksiazka(id):
+        if pdf:
+            (katalog(id) / "original.pdf").write_bytes(pdf)
+        else:
+            (katalog(id) / "original.txt").write_text(tekst, encoding="utf-8")
+        _zapisz_meta(id, {"tytul": tytul, "autor": autor, "kategorie": kategorie or [],
+                          "rodzaj": "pdf" if pdf else "tekst", "status": "czeka"})
+    return id
+
+
+def ustaw_status(id: str, status: str, blad: str | None = None) -> None:
+    meta = czytaj_meta(id)
+    meta["status"] = status
+    if blad:
+        meta["blad"] = blad
+    else:
+        meta.pop("blad", None)
+    _zapisz_meta(id, meta)
+
+
+def lista() -> list[dict]:
+    """Wszystkie książki biblioteki: meta z dopisanym id, po tytule."""
+    if not config.ZRODLA_DIR.exists():
+        return []
+    ksiazki = []
+    for kat in config.ZRODLA_DIR.iterdir():
+        if (kat / "meta.json").exists():
+            meta = czytaj_meta(kat.name)
+            meta["id"] = kat.name
+            meta["ma_przewodnik"] = (kat / "ksiazka.md").exists()
+            ksiazki.append(meta)
+    return sorted(ksiazki, key=lambda m: m.get("tytul", m["id"]).lower())

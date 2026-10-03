@@ -33,7 +33,9 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
 - Etap 5 gotowy (2026-10-03): `app/db.py`, `app/spory.py`, `zglos_spor`
   w orkiestratorze, scenariusze `testy/spory.py testy/spory.yaml`.
   Istniejący spór rozpoznawany po parze (książka, strona) — zaakceptowane.
-- Następny krok: etap 6 (panel).
+- Etap 6 gotowy (2026-10-03): panel `app/api/`, proces roboczy `app/worker.py`.
+  Lokalnie: `uvicorn app.api.main:app` + `python -m app.worker`.
+- Następny krok: etap 7 (serwer, docker-compose).
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
   `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane
@@ -66,8 +68,10 @@ Podjęte przez właściciela projektu świadomie:
 - OpenAI, SQLite, pliki na dysku; bez Postgresa, Qdranta, Redisa, MinIO.
 - Źródłem może być PDF albo wklejony tekst (jedna strona, `original.txt`).
 - Bez osobnych form odpowiedzi (artykuł / post / lista).
-- Styl: zasady w `docs/proces.md` („Styl odpowiedzi"). Liczby i zalecenia
-  tylko z książek; uzasadnienia model może dopisać sam.
+- Styl: zasady w `docs/proces.md` („Styl odpowiedzi"). Książki to baza wiedzy
+  (jak NotebookLM): liczby, dawki, terminy, temperatury i nazwy środków tylko
+  z książek, ze znacznikiem; wyjaśnienia i oczywiste kroki model może dopisać
+  sam, bez znacznika (zmiana 2026-10-03, wcześniej „zalecenia tylko z książek").
 
 ## Sposób pracy
 

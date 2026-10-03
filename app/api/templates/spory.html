@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Do ustalenia{% endblock %}
+{% block style %}
+<style>
+  .spor { margin-bottom: 1rem; max-width: 52rem; }
+  .spor label { font-weight: 400; display: flex; gap: 0.4rem; align-items: baseline; }
+  .spor input[type="text"] { max-width: 14rem; }
+  .spor:target { outline: 2px solid var(--uwaga); }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Do ustalenia</h1>
+<p class="podpowiedz">Książki podają tu różne wartości tej samej rzeczy. Agent nie wybiera za Ciebie —
+  zdecyduj, co obowiązuje. Ustalenie działa od następnego pytania i jest ważniejsze niż książka;
+  w odpowiedziach pojawi się jako „ustalenie redakcji”.</p>
+
+{% macro opcje_zrodel(s) %}
+  {% for o in s.opcje %}{{ o.wartosc }} — {{ tytuly.get(o.ksiazka, o.ksiazka) }},
+    <a href="/zrodla/{{ o.ksiazka }}?strona={{ o.strona }}">s. {{ o.strona }}</a>{% if not loop.last %} | {% endif %}{% endfor %}
+{% endmacro %}
+
+<h2>Otwarte ({{ otwarte|length }})</h2>
+{% for s in otwarte %}
+<div class="karta spor" id="U{{ s.id }}">
+  <h2 style="margin-top: 0">U{{ s.id }}: {{ s.czego_dotyczy }}{% if s.warunek %} <span class="podpowiedz">({{ s.warunek }})</span>{% endif %}</h2>
+  <form method="post" action="/spory/{{ s.id }}">
+    {% for o in s.opcje %}
+    <div class="pole"><label><input type="radio" name="wybor" value="{{ loop.index0 }}" required>
+      <span><strong>{{ o.wartosc }}</strong> — {{ tytuly.get(o.ksiazka, o.ksiazka) }},
+      <a href="/zrodla/{{ o.ksiazka }}?strona={{ o.strona }}">strona {{ o.strona }}</a></span></label></div>
+    {% endfor %}
+    <div class="pole"><label><input type="radio" name="wybor" value="__wlasna__"> własna wartość:
+      <input type="text" name="wlasna" placeholder="np. 14°C"></label></div>
+    <div class="pole"><label><input type="radio" name="wybor" value="__odrzuc__"> to nie jest spór
+      <span class="podpowiedz">(różne warunki, zakresy się zazębiają…)</span></label></div>
+    <button type="submit">Zapisz</button>
+  </form>
+</div>
+{% else %}
+<p class="pusto">Nic nie czeka.</p>
+{% endfor %}
+
+{% if rozstrzygniete %}
+<h2>Rozstrzygnięte</h2>
+<table>
+  <tr><th>Spór</th><th>Przyjęto</th><th>Skąd</th><th>Wartości w książkach</th></tr>
+  {% for s in rozstrzygniete %}
+  <tr id="U{{ s.id }}">
+    <td>U{{ s.id }}: {{ s.czego_dotyczy }}{% if s.warunek %} ({{ s.warunek }}){% endif %}</td>
+    <td><strong>{{ s.przyjeta_wartosc }}</strong></td>
+    <td>{% if s.skad == "redakcja" %}ustalenie redakcji{% else %}ze źródła{% endif %}</td>
+    <td class="podpowiedz">{{ opcje_zrodel(s) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if odrzucone %}
+<h2>Odrzucone — to nie spór</h2>
+<table>
+  <tr><th>Zgłoszenie</th><th>Wartości w książkach</th></tr>
+  {% for s in odrzucone %}
+  <tr id="U{{ s.id }}"><td>U{{ s.id }}: {{ s.czego_dotyczy }}{% if s.warunek %} ({{ s.warunek }}){% endif %}</td>
+    <td class="podpowiedz">{{ opcje_zrodel(s) }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

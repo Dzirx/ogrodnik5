@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Biblioteka{% endblock %}
+{% block style %}
+<style>
+  .podglowek { color: var(--przygaszony); max-width: 46rem; margin: 0 0 1.2rem; }
+  .pasek-narzedzi { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .szukanie { display: flex; gap: 0.5rem; align-items: center; max-width: 34rem; margin: 0; }
+  .szukanie .pole { flex: 1; margin: 0; }
+
+  .naglowek-tematow { font-size: 0.72rem; letter-spacing: 0.06em; color: var(--przygaszony); font-weight: 600; text-transform: uppercase; margin-right: 0.2rem; }
+  .etykiety-filtr { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0 0 1.2rem; }
+  {# W tym pasku pigułki maja byc obrysowane, nie wypelnione jak znaczniki
+     tematow na kartach - inaczej caly rzad wyglada jak jedna zielona plama. #}
+  .etykiety-filtr .etykieta { text-decoration: none; background: none; border: 1px solid var(--ramka); color: var(--tekst); padding: 0.3rem 0.9rem; }
+  .etykiety-filtr .wybrana { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+
+  .siatka-zrodel { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
+  .karta-zrodlo { border: 1px solid var(--ramka); border-radius: 10px; overflow: hidden; background: var(--karta); display: flex; flex-direction: column; }
+  {# Naglowek ma stala wysokosc, zeby karty w jednym rzedzie nie skakaly gora
+     w zaleznosci od dlugosci tytulu - krotki tytul zostawia po prostu puste
+     miejsce pod soba, dlugi tnie sie wielokropkiem po dwoch liniach. #}
+  .karta-zrodlo .naglowek-karty { padding: 0.8rem 1rem; color: #fff; min-height: 6.1rem; box-sizing: border-box; }
+  .karta-zrodlo .naglowek-karty small { display: block; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; opacity: 0.85; margin-bottom: 0.3rem; }
+  .karta-zrodlo .naglowek-karty strong {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; font-size: 1.02rem; line-height: 1.3;
+  }
+  {# Kolor po rodzaju zrodla, nie po temacie - to jedyne dwa rodzaje, jakie
+     program rozroznia (PDF i wklejony tekst), wiec dwa kolory wystarcza. #}
+  .karta-zrodlo.rodzaj-pdf .naglowek-karty { background: var(--akcent); }
+  .karta-zrodlo.rodzaj-tekst .naglowek-karty { background: #8a5a2e; }
+  .karta-zrodlo .tresc-karty { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
+  .karta-zrodlo .opis-zrodla { color: var(--przygaszony); font-size: 0.88rem; margin: 0; }
+  {# Bez :empty wyjatku - ma rezerwowac miejsce ZAWSZE, tez gdy karta nie ma
+     ani autora, ani opisu, inaczej wracamy do tego samego przesuniecia. #}
+  .karta-zrodlo .info-karty { min-height: 1.4rem; }
+  .karta-zrodlo .tematy-karty { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .stopka-karty { border-top: 1px solid var(--ramka); padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; font-size: 0.85rem; margin-top: auto; flex-wrap: wrap; }
+  .stopka-karty .stan { color: var(--przygaszony); }
+  .stopka-karty .stan.blad { color: var(--uwaga); }
+  .stopka-karty .akcje { display: flex; gap: 0.7rem; white-space: nowrap; }
+  .stopka-karty .akcje button, .stopka-karty .akcje a { background: none; border: 0; padding: 0; font: inherit; font-size: 0.85rem; color: var(--akcent); cursor: pointer; text-decoration: none; }
+  .stopka-karty .akcje button:hover, .stopka-karty .akcje a:hover { text-decoration: underline; }
+
+  .karta-dodaj {
+    border: 2px dashed var(--ramka); border-radius: 10px; background: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem;
+    color: var(--przygaszony); min-height: 12rem; font: inherit; width: 100%; text-align: center;
+  }
+  .karta-dodaj:hover { border-color: var(--akcent); color: var(--akcent); }
+  .karta-dodaj .plus { font-size: 1.8rem; line-height: 1; color: var(--akcent); }
+  .karta-dodaj strong { color: var(--tekst); font-weight: 600; }
+  .karta-dodaj small { font-size: 0.78rem; }
+
+  {# Te same okno modalne co w chat.html (poprawa odpowiedzi) - jeden spójny
+     wygląd okien w całym panelu, nie osobny styl na każdym ekranie. #}
+  .okno-edycji {
+    border: 1px solid var(--ramka); border-radius: 10px; padding: 1.2rem;
+    width: min(42rem, 92vw); background: var(--karta); color: var(--tekst);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2); max-height: 88vh; overflow-y: auto;
+  }
+  .okno-edycji::backdrop { background: rgba(0,0,0,0.35); }
+  .okno-potwierdzenia { width: min(26rem, 92vw); }
+  .okno-edycji h2 { margin: 0 0 0.8rem; font-size: 1.05rem; }
+  .okno-edycji textarea { font: inherit; }
+  .przyciski-okna { display: flex; gap: 0.5rem; margin-bottom: 0; }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Biblioteka{% if ksiazki|length != wszystkich %} <span class="podpowiedz">— {{ ksiazki|length }} z {{ wszystkich }}</span>{% endif %}</h1>
+<p class="podglowek">Każdą książkę dodajesz raz — kategorie (np. „pomidor") grupują książki
+  przy wyborze zakresu pytania. Jedna książka może mieć kilka kategorii.</p>
+
+{% if blad %}<p class="karta" style="border-color: var(--uwaga); max-width: 46rem;">{{ blad }}</p>{% endif %}
+
+<div class="pasek-narzedzi">
+  <form method="get" action="/zrodla" class="szukanie">
+    <div class="pole"><input type="search" name="szukaj" value="{{ szukaj }}" placeholder="Szukaj po tytule albo autorze"></div>
+    {% if kategoria %}<input type="hidden" name="kategoria" value="{{ kategoria }}">{% endif %}
+    <button type="submit" class="drugorzedny">Szukaj</button>
+    {% if szukaj or kategoria %}<a href="/zrodla" class="podpowiedz">wyczyść</a>{% endif %}
+  </form>
+</div>
+
+{% if kategorie %}
+<p class="etykiety-filtr">
+  <span class="naglowek-tematow">Kategorie</span>
+  <a href="/zrodla{% if szukaj %}?szukaj={{ szukaj|urlencode }}{% endif %}" class="etykieta{% if not kategoria %} wybrana{% endif %}">wszystkie ({{ wszystkich }})</a>
+  {% for nazwa, ile in kategorie %}
+  <a href="/zrodla?kategoria={{ nazwa|urlencode }}{% if szukaj %}&szukaj={{ szukaj|urlencode }}{% endif %}"
+     class="etykieta{% if kategoria == nazwa %} wybrana{% endif %}">{{ nazwa }} ({{ ile }})</a>
+  {% endfor %}
+</p>
+{% endif %}
+
+<div class="siatka-zrodel">
+  {% for k in ksiazki %}
+  <div class="karta-zrodlo rodzaj-{{ k.rodzaj or 'pdf' }}">
+    <div class="naglowek-karty">
+      <small>{% if k.rodzaj == "tekst" %}Wklejony tekst{% else %}PDF{% endif %}</small>
+      <strong>{{ k.tytul }}</strong>
+    </div>
+    <div class="tresc-karty">
+      <div class="info-karty">{% if k.autor %}<p class="podpowiedz" style="margin:0;">{{ k.autor }}</p>{% endif %}</div>
+      <p class="tematy-karty">{% for e in k.kategorie or [] %}<span class="etykieta">{{ e }}</span>{% endfor %}</p>
+      <div class="stopka-karty">
+        <span class="stan{% if k.status == 'blad' %} blad{% endif %}">
+          {% if k.status == "gotowa" %}{{ k.liczba_stron }} stron
+            {%- if k.strony_ocr or k.strony_tabela %}<br><small>
+              {%- if k.strony_ocr %}{{ k.strony_ocr|length }} z obrazu{% endif %}
+              {%- if k.strony_ocr and k.strony_tabela %}, {% endif %}
+              {%- if k.strony_tabela %}{{ k.strony_tabela|length }} z tabelą{% endif %}</small>{% endif %}
+            {%- set nieudane = (k.odczyt_tabel or {}).values()|reject("equalto", "ok")|list %}
+            {%- if nieudane %}<br><small class="blad">{{ nieudane|length }} tabel nieodczytanych — ponów</small>{% endif %}
+          {% elif k.status == "blad" %}błąd: {{ k.blad }}
+          {% elif k.status == "strony" %}{{ k.liczba_stron }} stron · brak przewodnika
+          {% else %}przetwarzanie…{% endif %}
+        </span>
+        <span class="akcje">
+          <a href="/zrodla/{{ k.id }}">Otwórz</a>
+          <button type="button" data-edytuj="edycja-{{ k.id }}">Edytuj</button>
+          <button type="button" data-edytuj="potwierdz-{{ k.id }}" title="Przetwórz od nowa">↻ ponów</button>
+        </span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <button type="button" class="karta-dodaj" data-edytuj="okno-dodaj">
+    <span class="plus">+</span>
+    <strong>{% if wszystkich %}Dodaj książkę{% else %}Dodaj pierwszą książkę{% endif %}</strong>
+    <small>PDF albo wklejony tekst</small>
+  </button>
+</div>
+
+<dialog class="okno-edycji" id="okno-dodaj">
+  <form method="post" action="/zrodla" enctype="multipart/form-data">
+    <h2>Dodaj książkę</h2>
+    <div class="pole"><label for="tytul">Tytuł</label>
+      <input type="text" id="tytul" name="tytul" required placeholder="np. Sułek, pomidory"></div>
+    <div class="pole"><label for="kategorie">Kategorie</label>
+      <input type="text" id="kategorie" name="kategorie" placeholder="pomidor, uprawa pod osłonami">
+      <p class="podpowiedz">Po przecinku.</p></div>
+    <div class="pole"><label for="autor">Autor</label><input type="text" id="autor" name="autor"></div>
+    <div class="pole"><label for="plik">Plik PDF</label><input type="file" id="plik" name="plik" accept=".pdf"></div>
+    <div class="pole"><label for="tekst">albo wklej tekst</label>
+      <textarea id="tekst" name="tekst" placeholder="Wklej treść — np. własną notatkę redakcji."></textarea></div>
+    <p class="podpowiedz">Tekst stron, tabele i przewodnik przygotują się w tle — przy grubej książce kilka minut.</p>
+    <p class="przyciski-okna">
+      <button type="submit">Dodaj</button>
+      <button type="button" class="drugorzedny" data-zamknij="okno-dodaj">Anuluj</button>
+    </p>
+  </form>
+</dialog>
+
+{% for k in ksiazki %}
+<dialog class="okno-edycji" id="edycja-{{ k.id }}">
+  <form method="post" action="/zrodla/{{ k.id }}/edytuj">
+    <h2>Edytuj książkę</h2>
+    <div class="pole"><label>Tytuł</label><input type="text" name="tytul" required value="{{ k.tytul }}"></div>
+    <div class="pole"><label>Kategorie</label><input type="text" name="kategorie" value="{{ (k.kategorie or [])|join(', ') }}">
+      <p class="podpowiedz">Po przecinku. Zastępuje obecne kategorie.</p></div>
+    <div class="pole"><label>Autor</label><input type="text" name="autor" value="{{ k.autor or '' }}"></div>
+    {% if k.rodzaj == "tekst" %}
+    <div class="pole"><label>Treść</label><textarea name="tekst" rows="10">{{ teksty.get(k.id, '') }}</textarea>
+      <p class="podpowiedz">Zmiana treści przetwarza tekst od nowa (przewodnik zostaje).</p></div>
+    {% endif %}
+    <p class="przyciski-okna">
+      <button type="submit">Zapisz</button>
+      <button type="button" class="drugorzedny" data-zamknij="edycja-{{ k.id }}">Anuluj</button>
+    </p>
+  </form>
+</dialog>
+<dialog class="okno-edycji okno-potwierdzenia" id="potwierdz-{{ k.id }}">
+  <h2>Przetworzyć od nowa?</h2>
+  <p class="podpowiedz">„{{ k.tytul }}” — tekst stron, OCR i tabele zostaną odczytane z oryginału jeszcze raz.
+    Przewodnik zostaje (poprawisz go albo wygenerujesz od nowa na ekranie książki). Rób to po błędzie albo
+    gdy tabele nie zostały odczytane.</p>
+  <p class="przyciski-okna">
+    <button type="submit" form="ponow-{{ k.id }}">Tak, przetwórz</button>
+    <button type="button" class="drugorzedny" data-zamknij="potwierdz-{{ k.id }}">Anuluj</button>
+  </p>
+</dialog>
+<form id="ponow-{{ k.id }}" method="post" action="/zrodla/{{ k.id }}/przetworz" style="display:none"></form>
+{% endfor %}
+
+<script>
+  document.querySelectorAll('[data-edytuj]').forEach(function (p) {
+    p.addEventListener('click', function () { document.getElementById(p.dataset.edytuj).showModal(); });
+  });
+  document.querySelectorAll('[data-zamknij]').forEach(function (p) {
+    p.addEventListener('click', function () { document.getElementById(p.dataset.zamknij).close(); });
+  });
+  document.querySelectorAll('.okno-edycji').forEach(function (o) {
+    o.addEventListener('click', function (e) { if (e.target === o) { o.close(); } });
+  });
+  {% if blad %}document.getElementById('okno-dodaj').showModal();{% endif %}
+  {% if ksiazki|selectattr("status", "in", ["czeka", "przetwarzanie"])|list %}
+  // Książka w przetwarzaniu — lista odświeża się sama, aż będzie gotowa.
+  setTimeout(function () { if (!document.querySelector('dialog[open]')) { location.reload(); } }, 5000);
+  {% endif %}
+</script>
+{% endblock %}

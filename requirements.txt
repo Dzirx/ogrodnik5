@@ -7,3 +7,4 @@ openai
 pymupdf==1.25.1
 pyyaml
 pytest
+httpx

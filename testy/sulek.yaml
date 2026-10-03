@@ -214,3 +214,13 @@
     - a te późne?
   musi: ["100 x 80 cm"]
   strony: [23]
+
+- id: instrukcja-odkazanie
+  rodzaj: szerokie
+  pytanie: Napisz krótką instrukcję odkażania nasion pomidora nadmanganianem potasu dla czytelników.
+  musi: ["1% roztwór, 50 minut [s. 39]"]
+  strony: [39, 13]
+  nie_wolno: ["liczba spoza książki (inne stężenie, czas, temperatura wody, czas suszenia)"]
+  uwagi: >
+    Od 2026-10-03 wolno dopisać oczywiste kroki bez liczb i bez znacznika
+    („opłucz, osusz, wysiej"); nie wolno żadnej liczby spoza książki.

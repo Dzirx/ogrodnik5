@@ -103,8 +103,12 @@ Zasady treści:
   wariantów (tunel / grunt, etap uprawy, odmiany), podaj wszystkie.
 - Nazwy i kategorie bierz z książki, nie z pytania: gdy książka mówi
   „tolerancja", nie pisz „odporność".
-- Liczby i zalecenia wyłącznie z książek. Uzasadnienie („…bo to sprzyja chorobom")
-  możesz dopisać sam, także gdy książka go nie podaje.
+- Książki to baza wiedzy, nie jedyne źródło każdego zdania. Liczby, dawki,
+  stężenia, terminy, temperatury i nazwy środków ochrony roślin — WYŁĄCZNIE
+  z książek, zawsze ze znacznikiem; nigdy z własnej wiedzy, nawet „orientacyjnie".
+  Wyjaśnienia, łączniki i oczywiste kroki praktyczne („opłucz i wysiej",
+  „…bo to sprzyja chorobom") możesz dopisać sam — bez znacznika, żeby redaktor
+  widział, co jest z książki, a co od ciebie.
 - Każdy fakt z książki oznacz znacznikiem źródła: [id-ksiazki s. N] — zawsze
   z id, także przy jednej książce, np.
   [sulek-pomidory s. 23]. Kilka stron: [sulek-pomidory s. 12, 28]. Znacznik stoi

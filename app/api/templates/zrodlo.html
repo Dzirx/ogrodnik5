@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ k.tytul }}{% endblock %}
+{% block style %}
+<style>
+  .uklad-zrodla { display: grid; grid-template-columns: 12rem minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .lista-stron { max-height: 70vh; overflow-y: auto; }
+  .lista-stron a { display: block; padding: 0.3rem 0.6rem; text-decoration: none; color: var(--tekst); border-radius: 4px; font-size: 0.9rem; }
+  .lista-stron a:hover { background: var(--tlo); }
+  .lista-stron a.biezaca { background: var(--akcent-jasny); color: var(--akcent); font-weight: 600; }
+  .lista-stron small { color: var(--uwaga); }
+  .tekst-strony { white-space: pre-wrap; font-size: 0.95rem; background: var(--tlo); padding: 0.8rem; border-radius: 6px; }
+  .uwaga-strony { color: var(--uwaga); font-size: 0.85rem; }
+  .przewodnik textarea { min-height: 60vh; font: 0.85rem/1.5 ui-monospace, monospace; }
+  /* W jednej kolumnie lista stron nie może zasłonić tekstu strony. */
+  @media (max-width: 1100px) { .uklad-zrodla { grid-template-columns: 1fr; } .lista-stron { max-height: 10rem; } }
+</style>
+{% endblock %}
+{% block content %}
+<p>{% if powrot %}<a href="{{ powrot }}">← wróć do rozmowy</a> · {% endif %}<a href="/zrodla">wszystkie książki</a></p>
+<h1>{{ k.tytul }}</h1>
+<p class="podpowiedz">
+  {% if k.autor %}{{ k.autor }} · {% endif %}
+  {% for e in k.kategorie or [] %}<span class="etykieta">{{ e }}</span>{% endfor %}
+  · <a href="/zrodla/{{ k.id }}/plik">pobierz oryginał</a>
+  {% if k.status not in ("gotowa", "strony") %}· <strong>{{ k.status }}{% if k.blad %}: {{ k.blad }}{% endif %}</strong>{% endif %}
+</p>
+
+<div class="uklad-zrodla">
+  <div class="karta">
+    <strong>Strony</strong>
+    <div class="lista-stron">
+      {% for n in range(1, liczba + 1) %}
+      <a href="/zrodla/{{ k.id }}?strona={{ n }}{% if powrot %}&powrot={{ powrot|urlencode }}{% endif %}" class="{% if n == biezaca %}biezaca{% endif %}">Strona {{ n }}
+        {%- if n in (k.strony_tabela or []) %} <small title="tabela odczytana automatycznie">tabela</small>{% endif %}
+        {%- if n in (k.strony_ocr or []) %} <small title="tekst z obrazu">OCR</small>{% endif %}</a>
+      {% endfor %}
+    </div>
+    <script>var b = document.querySelector('.lista-stron .biezaca'); if (b) { b.scrollIntoView({ block: 'center' }); }</script>
+  </div>
+
+  <div class="karta">
+    <strong>Strona {{ biezaca }}</strong>
+    {% if tabela %}<p class="uwaga-strony">Tabela odczytana automatycznie — sprawdź wartości w oryginale.
+      {%- if (k.odczyt_tabel or {}).get(biezaca|string, "ok") != "ok" %} Odczyt się nie udał ({{ k.odczyt_tabel[biezaca|string] }}) — to surowy tekst; przetwórz książkę ponownie.{% endif %}</p>{% endif %}
+    {% if ocr %}<p class="uwaga-strony">Część tekstu odczytana z obrazu — możliwe literówki.</p>{% endif %}
+    {% if tekst %}<div class="tekst-strony">{{ tekst }}</div>
+    {% else %}<p class="podpowiedz">Na tej stronie nie ma tekstu (zdjęcia albo pusta strona).</p>{% endif %}
+  </div>
+
+  <div class="karta przewodnik">
+    <strong>Przewodnik</strong>
+    <p class="podpowiedz">Agent czyta go na starcie pytania: mapa stron i słowa, pod którymi temat stoi w książce.
+      Popraw, jeśli wskazuje złe strony albo brakuje słów.</p>
+    <form method="post" action="/zrodla/{{ k.id }}/przewodnik">
+      <textarea name="tekst">{{ przewodnik }}</textarea>
+      <p style="display:flex; gap:0.5rem;"><button type="submit">Zapisz przewodnik</button>
+        <button type="submit" class="drugorzedny" form="generuj" onclick="return confirm('Wygenerować przewodnik od nowa? Twoje poprawki zostaną zastąpione.')">Wygeneruj od nowa</button></p>
+    </form>
+    <form id="generuj" method="post" action="/zrodla/{{ k.id }}/przewodnik/generuj"></form>
+  </div>
+</div>
+{% endblock %}

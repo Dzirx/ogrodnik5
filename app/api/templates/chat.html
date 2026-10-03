@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{#
+  Kategorie grupują książki — zaznaczenie kategorii bierze wszystkie naraz,
+  jak w NotebookLM. Przy kilkunastu książkach i kilkudziesięciu warzywach
+  klikanie po jednej nie ma sensu.
+#}
+{% macro wybor_ksiazek(pogrupowane, wybrane) %}
+<div class="lista-ksiazek">
+  {% for kategoria, lista in pogrupowane %}
+  <div class="grupa-zrodel">
+    {% if kategoria %}
+    <label class="naglowek-grupy">
+      <input type="checkbox" class="zaznacz-grupe"> <strong>{{ kategoria }}</strong>
+    </label>
+    {% endif %}
+    {% for k in lista %}
+    <label><input type="checkbox" name="ksiazki" value="{{ k.id }}"
+      {% if wybrane is none or k.id in wybrane %}checked{% endif %}> {{ k.tytul }}</label>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  <script>
+    // Zaznaczenie całej kategorii — bez niego redaktor klika po jednej książce.
+    document.querySelectorAll('.zaznacz-grupe').forEach(function (grupa) {
+      grupa.addEventListener('change', function () {
+        grupa.closest('.grupa-zrodel').querySelectorAll('input[name="ksiazki"]').forEach(function (pole) {
+          pole.checked = grupa.checked;
+          pole.dispatchEvent(new Event('zmiana-ksiazki', { bubbles: true }));
+        });
+      });
+    });
+    // Książka z dwiema kategoriami stoi w dwóch grupach — jej pola trzymają się
+    // razem, inaczej odznaczenie jednej kopii nic nie dawało.
+    function zsynchronizuj(pole) {
+      document.querySelectorAll('input[name="ksiazki"][value="' + pole.value + '"]').forEach(function (b) {
+        if (b !== pole) { b.checked = pole.checked; }
+      });
+    }
+    document.querySelectorAll('input[name="ksiazki"]').forEach(function (pole) {
+      pole.addEventListener('change', function () { zsynchronizuj(pole); });
+      pole.addEventListener('zmiana-ksiazki', function () { zsynchronizuj(pole); });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{% block title %}{% if rozmowa %}{{ rozmowa.tytul }}{% else %}Pracownia{% endif %}{% endblock %}
+{% block style %}
+<style>
+  /* Trzy kolumny: wątki, rozmowa, podgląd strony. Każda przewija się osobno. */
+  .uklad { display: grid; grid-template-columns: 15rem minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; height: calc(100vh - 7rem); }
+  .uklad.bez-podgladu { grid-template-columns: 15rem minmax(0, 1fr); }
+  .kolumna { background: var(--karta); border: 1px solid var(--ramka); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
+  .kolumna > .naglowek { padding: 0.7rem 1rem; border-bottom: 1px solid var(--ramka); font-weight: 600; font-size: 0.9rem; }
+  .kolumna > .tresc { padding: 1rem; }
+  .kolumna > .tresc, .kolumna > .watki { overflow-y: auto; min-height: 0; }
+  .kolumna > .nad-watkami { overflow: visible; flex: none; }
+  .kolumna > .przewijana { flex: 1; }
+  .stopka-rozmowy { border-top: 1px solid var(--ramka); padding: 0.8rem 1rem; background: var(--karta); border-radius: 0 0 8px 8px; }
+  .stopka-rozmowy form { display: flex; gap: 0.5rem; align-items: flex-end; }
+  .stopka-rozmowy .pole { flex: 1; margin: 0; max-width: none; }
+  .stopka-rozmowy textarea { resize: none; overflow-y: auto; min-height: 0; max-height: 9rem; line-height: 1.4; }
+  .stopka-rozmowy button { white-space: nowrap; }
+  .stopka-rozmowy .wybor-zrodel { margin-top: 0.6rem; border-top: 0; padding-top: 0; }
+  .stopka-rozmowy .wybor-zrodel form { display: block; }
+  .watki { list-style: none; margin: 0; padding: 0; }
+  .starsze-watki a { color: var(--przygaszony); font-size: 0.85rem; }
+  .watki li { border-bottom: 1px solid var(--ramka); }
+  .watki a { display: block; padding: 0.5rem 1rem; text-decoration: none; color: var(--tekst); font-size: 0.9rem; }
+  .watki a:hover { background: var(--tlo); }
+  .watki .biezacy { background: var(--akcent-jasny); font-weight: 600; }
+  .nowa-rozmowa { display: block; text-align: center; padding: 0.5rem; border: 1px solid var(--ramka); border-radius: 6px; text-decoration: none; font-weight: 500; }
+  .nowa-rozmowa:hover { background: var(--akcent-jasny); }
+  .wybor-zrodel { margin-top: 1rem; border-top: 1px solid var(--ramka); padding-top: 0.8rem; }
+  .wybor-zrodel > summary { cursor: pointer; color: var(--przygaszony); font-size: 0.9rem; }
+  .wybor-zrodel > summary:hover { color: var(--tekst); }
+  .wybor-zrodel > summary[data-stan="zapisano"]::after { content: " · zapisano"; color: var(--akcent); }
+  .wybor-zrodel .lista-ksiazek { max-height: 16rem; overflow-y: auto; margin-top: 0.6rem; }
+  .grupa-zrodel { margin-bottom: 0.6rem; }
+  .naglowek-grupy { margin-bottom: 0.2rem; }
+  .grupa-zrodel label:not(.naglowek-grupy) { padding-left: 1rem; }
+  .lista-ksiazek label { font-weight: 400; font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: start; }
+  .pytanie { background: var(--akcent); color: #fff; padding: 0.6rem 0.9rem; border-radius: 10px; margin: 0 0 1rem auto; max-width: 85%; width: fit-content; white-space: pre-wrap; }
+  .odpowiedz { margin-bottom: 2rem; }
+  .odpowiedz p { margin: 0 0 0.8rem; }
+  .odpowiedz ul { margin: 0 0 0.8rem; padding-left: 1.3rem; }
+  .narzedzia-odpowiedzi { margin: 0.3rem 0 0; }
+  .ikona { background: none; border: 1px solid var(--ramka); color: var(--przygaszony); padding: 0.15rem 0.5rem; font-size: 0.8rem; border-radius: 4px; margin-right: 0.3rem; }
+  .ikona:hover { color: var(--tekst); background: var(--tlo); }
+  .okno-edycji { border: 1px solid var(--ramka); border-radius: 10px; padding: 1.2rem; width: min(42rem, 92vw); background: var(--karta); color: var(--tekst); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .okno-edycji::backdrop { background: rgba(0,0,0,0.35); }
+  .okno-edycji h2 { margin: 0 0 0.8rem; font-size: 1.05rem; }
+  .przyciski-okna { display: flex; gap: 0.5rem; margin-bottom: 0; }
+  .tekst-poprawiony { border-left: 3px solid var(--akcent); padding-left: 0.7rem; }
+  /* Znacznik źródła: tytuł książki i strony jako linki do podglądu. */
+  .znacznik { font-size: 0.8rem; color: var(--przygaszony); background: var(--akcent-jasny); border-radius: 4px; padding: 0 0.35rem; white-space: nowrap; }
+  .znacznik a { color: var(--akcent); }
+  /* Ustalenie redakcji: numer sporu z etykietą, nie odnośnik do książki. */
+  .spor-znacznik { font-size: 0.75rem; color: var(--uwaga); background: var(--uwaga-tlo); border-radius: 4px; padding: 0 0.35rem; text-decoration: none; white-space: nowrap; }
+  .spor-znacznik.rozstrzygniety { color: var(--akcent); background: var(--akcent-jasny); }
+  .spor-znacznik.odrzucony { color: var(--przygaszony); background: var(--tlo); }
+  .zrodla-odpowiedzi { font-size: 0.85rem; color: var(--przygaszony); margin: 0.4rem 0 0; }
+  .zrodla-odpowiedzi a { color: var(--przygaszony); }
+  .ramka-sporu { border: 1px solid var(--uwaga); background: var(--uwaga-tlo); border-radius: 8px; padding: 0.8rem 1rem; margin: 0.8rem 0 0; font-size: 0.92rem; }
+  .ramka-sporu h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+  .ramka-sporu label { font-weight: 400; display: flex; gap: 0.4rem; align-items: baseline; }
+  .ramka-sporu input[type="text"] { max-width: 12rem; padding: 0.25rem 0.5rem; }
+  .ramka-sporu .wynik { color: var(--przygaszony); }
+  .strona-zrodla { background: var(--tlo); padding: 0.8rem; border-radius: 6px; font-size: 0.95rem; white-space: pre-wrap; }
+  .strona-zrodla mark { background: #ffe680; padding: 0 0.1rem; }
+  .uwaga-strony { color: var(--uwaga); font-size: 0.85rem; }
+  .czekam { color: var(--przygaszony); font-style: italic; }
+  .blad-odpowiedzi { color: var(--uwaga); }
+  @media (max-width: 1100px) { .uklad, .uklad.bez-podgladu { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="uklad{% if not podglad %} bez-podgladu{% endif %}">
+
+  <div class="kolumna">
+    <div class="tresc nad-watkami"><a href="/" class="nowa-rozmowa">+ Nowa rozmowa</a></div>
+    <ul class="watki">
+      {% for r in rozmowy %}
+      <li><a href="/rozmowy/{{ r.id }}" class="{% if rozmowa and r.id == rozmowa.id %}biezacy{% endif %}">{{ r.tytul }}</a></li>
+      {% else %}
+      <li style="padding: 0.6rem 1rem;"><small class="podpowiedz">Jeszcze nie ma żadnych pytań.</small></li>
+      {% endfor %}
+      {% if starsze %}
+      <li class="starsze-watki"><a href="{{ request.url.include_query_params(historia=nastepne) }}">Pokaż więcej ({{ starsze }})</a></li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="kolumna rozmowa">
+    <div class="naglowek">{% if rozmowa %}{{ rozmowa.tytul }}{% else %}Zapytaj o swoje książki{% endif %}</div>
+    <div class="tresc przewijana" id="przebieg">
+      {% if not rozmowa %}
+        {% if ksiazki %}
+        <p>Odpowiedź powstanie wyłącznie z zaznaczonych książek — przy każdej informacji
+        zobaczysz, z której strony pochodzi.</p>
+        <form method="post" action="/pytania">
+          <div class="pole">
+            <textarea name="pytanie" rows="2" placeholder="np. kiedy obcinać czubki pomidorom? — albo: napisz artykuł o produkcji rozsady" required autofocus></textarea>
+          </div>
+          <details class="wybor-zrodel">
+            <summary>Pytaj o: wszystkie książki ({{ ksiazki|length }})</summary>
+            {{ wybor_ksiazek(pogrupowane, None) }}
+          </details>
+          <p><button type="submit">Zapytaj</button></p>
+        </form>
+        {% else %}
+        <p class="pusto">Najpierw dodaj książkę w zakładce <a href="/zrodla">Biblioteka</a>.</p>
+        {% endif %}
+      {% else %}
+        {% for w in wiadomosci %}
+          {% if w.rola == "user" %}
+            <p class="pytanie">{{ w.tekst }}</p>
+          {% elif w.status in ("czeka", "w_toku") %}
+            <p class="czekam">Szukam w książkach…</p>
+          {% elif w.status == "blad" %}
+            <p class="blad-odpowiedzi">Nie udało się przygotować odpowiedzi: {{ w.blad }}</p>
+          {% else %}
+            {% set tekst = w.poprawiony_tekst or w.tekst %}
+            <div class="odpowiedz" id="odp-{{ w.id }}">
+              <div class="tresc-odpowiedzi{% if w.poprawiony_tekst %} tekst-poprawiony{% endif %}">
+                {{ odpowiedz_html(tekst, tytuly, "/rozmowy/" ~ rozmowa.id, w.statusy) }}
+              </div>
+              {# Komplet książek i stron pod odpowiedzią. #}
+              {% set uzyte = zrodla_odpowiedzi(tekst) %}
+              {% if uzyte %}
+              <p class="zrodla-odpowiedzi">Źródła:
+                {%- for id, numery in uzyte.items() %} {{ tytuly.get(id, id) }},
+                  s. {% for n in numery %}<a href="?podglad={{ id }}:{{ n }}">{{ n }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if not loop.last %} ·{% endif %}
+                {%- endfor %}
+              </p>
+              {% endif %}
+
+              {# Ramka sporu pod odpowiedzią, w której spór powstał. #}
+              {% for s in w.spory %}
+              <div class="ramka-sporu" id="U{{ s.id }}">
+                <h3>Spór U{{ s.id }}: {{ s.czego_dotyczy }}{% if s.warunek %} ({{ s.warunek }}){% endif %}</h3>
+                {% if s.status == "otwarty" %}
+                <form method="post" action="/spory/{{ s.id }}">
+                  <input type="hidden" name="powrot" value="/rozmowy/{{ rozmowa.id }}">
+                  {% for o in s.opcje %}
+                  <label><input type="radio" name="wybor" value="{{ loop.index0 }}" required>
+                    <span><strong>{{ o.wartosc }}</strong> — {{ tytuly.get(o.ksiazka, o.ksiazka) }},
+                    <a href="?podglad={{ o.ksiazka }}:{{ o.strona }}">s. {{ o.strona }}</a></span></label>
+                  {% endfor %}
+                  <label><input type="radio" name="wybor" value="__wlasna__"> własna wartość:
+                    <input type="text" name="wlasna" placeholder="np. 14°C"></label>
+                  <label><input type="radio" name="wybor" value="__odrzuc__"> to nie jest spór</label>
+                  <p style="margin: 0.5rem 0 0;"><button type="submit">Zapisz</button>
+                    <small class="podpowiedz">Działa od następnego pytania.</small></p>
+                </form>
+                {% elif s.status == "rozstrzygniety" %}
+                <p class="wynik">Przyjęto: <strong>{{ s.przyjeta_wartosc }}</strong>
+                  ({% if s.skad == "redakcja" %}ustalenie redakcji{% else %}ze źródła{% endif %}).</p>
+                {% else %}
+                <p class="wynik">Odrzucony — to nie jest spór.</p>
+                {% endif %}
+              </div>
+              {% endfor %}
+
+              <p class="narzedzia-odpowiedzi">
+                <button type="button" class="ikona" data-kopiuj="odp-{{ w.id }}" title="Kopiuj odpowiedź">⧉ kopiuj</button>
+                <button type="button" class="ikona" data-edytuj="edycja-{{ w.id }}" title="Popraw tekst">✎ popraw</button>
+                {% if w.poprawiony_tekst %}<small class="podpowiedz">poprawione ręcznie</small>{% endif %}
+              </p>
+              <dialog class="okno-edycji" id="edycja-{{ w.id }}">
+                <form method="post" action="/rozmowy/{{ rozmowa.id }}/wiadomosci/{{ w.id }}">
+                  <h2>Popraw odpowiedź</h2>
+                  <textarea name="tekst" rows="12">{{ tekst }}</textarea>
+                  <p class="podpowiedz">Znaczniki <code>[id-ksiazki s. N]</code> i <code>[U17]</code> zostają
+                    linkami — przesuń je razem ze zdaniem albo usuń. Puste pole przywraca wersję z modelu.</p>
+                  <p class="przyciski-okna">
+                    <button type="submit">Zapisz</button>
+                    <button type="button" class="drugorzedny" data-zamknij="edycja-{{ w.id }}">Anuluj</button>
+                  </p>
+                </form>
+              </dialog>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    {% if rozmowa %}
+    <div class="stopka-rozmowy">
+      <form method="post" action="/rozmowy/{{ rozmowa.id }}/pytania">
+        <div class="pole"><textarea name="pytanie" rows="1" placeholder="Zadaj kolejne pytanie" required autofocus></textarea></div>
+        <button type="submit">Wyślij</button>
+      </form>
+      <details class="wybor-zrodel">
+        <summary>Czerpie z: <span class="licznik-zrodel" data-wszystkich="{{ ksiazki|length }}">
+          {%- if rozmowa.ksiazki|length < ksiazki|length %}{{ rozmowa.ksiazki|length }} z {{ ksiazki|length }} książek
+          {%- else %}wszystkich książek ({{ ksiazki|length }}){% endif %}</span>
+        </summary>
+        <form method="post" action="/rozmowy/{{ rozmowa.id }}/zakres" class="zakres-rozmowy">
+          {{ wybor_ksiazek(pogrupowane, rozmowa.ksiazki) }}
+          <p><button type="submit" class="drugorzedny">Zapisz zakres</button></p>
+        </form>
+      </details>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if podglad %}
+  <div class="kolumna">
+    <div class="naglowek" style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+      <span>{{ podglad.tytul }} — strona {{ podglad.strona }}</span>
+      <a href="/rozmowy/{{ rozmowa.id }}" title="Zamknij podgląd" style="text-decoration:none; font-size:1.2rem;">✕</a>
+    </div>
+    <div class="tresc">
+      {% if podglad.tabela %}<p class="uwaga-strony">Tabela odczytana automatycznie — sprawdź wartości w oryginale.</p>{% endif %}
+      {% if podglad.ocr %}<p class="uwaga-strony">Część tekstu odczytana z obrazu — możliwe literówki.</p>{% endif %}
+      {# Zwykły tekst strony, bez obrazu PDF; zaznaczone liczby ze zdania odpowiedzi. #}
+      <div class="strona-zrodla">
+        {%- for k in podglad.kawalki -%}{% if k.zaznacz %}<mark>{{ k.tekst }}</mark>{% else %}{{ k.tekst }}{% endif %}{%- endfor -%}
+      </div>
+      <p class="podpowiedz">
+        {% if podglad.poprzednia %}<a href="?podglad={{ podglad.ksiazka }}:{{ podglad.poprzednia }}">← s. {{ podglad.poprzednia }}</a> · {% endif %}
+        {% if podglad.nastepna %}<a href="?podglad={{ podglad.ksiazka }}:{{ podglad.nastepna }}">s. {{ podglad.nastepna }} →</a> · {% endif %}
+        <a href="/zrodla/{{ podglad.ksiazka }}?strona={{ podglad.strona }}&powrot=/rozmowy/{{ rozmowa.id }}">otwórz książkę</a>
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  {% if czeka %}
+  // Odpowiedź liczy się w tle — sprawdzamy stan i przeładowujemy, gdy gotowa.
+  // Nie co 3 s całą stronę: to zamykało otwarty podgląd i okno poprawki.
+  setInterval(function () {
+    fetch('/rozmowy/{{ rozmowa.id }}/stan', { credentials: 'include' })
+      .then(function (r) { return r.json(); })
+      .then(function (s) { if (!s.czeka) { location.reload(); } });
+  }, 3000);
+  {% endif %}
+
+  // Zakres rozmowy zapisuje się sam, chwilę po ostatnim kliknięciu.
+  document.querySelectorAll('form.zakres-rozmowy').forEach(function (formularz) {
+    var przycisk = formularz.querySelector('button[type="submit"]');
+    if (przycisk) { przycisk.hidden = true; }
+    var podsumowanie = formularz.closest('details').querySelector('summary');
+    var licznik = formularz.closest('details').querySelector('.licznik-zrodel');
+    var zegar = null;
+    function odswiezLicznik() {
+      if (!licznik) { return; }
+      var wszystkich = Number(licznik.dataset.wszystkich);
+      var numery = new Set();
+      formularz.querySelectorAll('input[name="ksiazki"]:checked').forEach(function (p) { numery.add(p.value); });
+      var ile = numery.size;
+      licznik.textContent = (ile && ile < wszystkich) ? ile + ' z ' + wszystkich + ' książek' : 'wszystkich książek (' + wszystkich + ')';
+    }
+    function zapisz() {
+      // fetch odmawia adresów z wpisanym loginem (http://user:haslo@host/).
+      var adres = new URL(formularz.action, location.href);
+      adres.username = ''; adres.password = '';
+      fetch(adres.toString(), { method: 'POST', body: new FormData(formularz), credentials: 'include' })
+        .then(function () {
+          if (podsumowanie) {
+            podsumowanie.dataset.stan = 'zapisano';
+            setTimeout(function () { delete podsumowanie.dataset.stan; }, 1200);
+          }
+        });
+    }
+    formularz.addEventListener('submit', function (e) { e.preventDefault(); zapisz(); });
+    formularz.addEventListener('change', function () { odswiezLicznik(); clearTimeout(zegar); zegar = setTimeout(zapisz, 700); });
+  });
+
+  // Pole pytania rośnie z tekstem i wysyła Enterem; Shift+Enter to nowa linia.
+  document.querySelectorAll('.stopka-rozmowy textarea').forEach(function (pole) {
+    function dopasuj() { pole.style.height = 'auto'; pole.style.height = pole.scrollHeight + 'px'; }
+    pole.addEventListener('input', dopasuj);
+    pole.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (pole.value.trim()) { pole.form.requestSubmit(); } }
+    });
+    dopasuj();
+  });
+
+  // Rozmowa otwiera się na ostatniej wiadomości.
+  var przebieg = document.getElementById('przebieg');
+  if (przebieg) { przebieg.scrollTop = przebieg.scrollHeight; }
+
+  // Kopiowanie: sam tekst, bez znaczników źródeł — ma się wkleić czysto.
+  document.querySelectorAll('[data-kopiuj]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      var blok = document.getElementById(przycisk.dataset.kopiuj).querySelector('.tresc-odpowiedzi').cloneNode(true);
+      blok.querySelectorAll('.znacznik, .spor-znacznik').forEach(function (z) { z.remove(); });
+      var tekst = Array.from(blok.children).map(function (el) { return el.innerText.trim(); }).join('\n\n')
+        .replace(/[ \t]+/g, ' ').replace(/ +([.,;:])/g, '$1').trim();
+      navigator.clipboard.writeText(tekst).then(function () {
+        var poprzedni = przycisk.innerText;
+        przycisk.innerText = '✓ skopiowane';
+        setTimeout(function () { przycisk.innerText = poprzedni; }, 1500);
+      });
+    });
+  });
+  document.querySelectorAll('[data-edytuj]').forEach(function (p) {
+    p.addEventListener('click', function () { var o = document.getElementById(p.dataset.edytuj); o.showModal(); o.querySelector('textarea').focus(); });
+  });
+  document.querySelectorAll('[data-zamknij]').forEach(function (p) {
+    p.addEventListener('click', function () { document.getElementById(p.dataset.zamknij).close(); });
+  });
+  document.querySelectorAll('.okno-edycji').forEach(function (o) {
+    o.addEventListener('click', function (e) { if (e.target === o) { o.close(); } });
+  });
+</script>
+{% endblock %}

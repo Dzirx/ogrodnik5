@@ -1,6 +1,6 @@
 # Ogrodnik 5 — jak działa
 
-Stan: etapy 0–5 zrobione, następny etap 6 (panel). Ustalenia z 1–2 października 2026.
+Stan: etapy 0–6 zrobione, następny etap 7 (serwer). Ustalenia z 1–2 października 2026.
 
 ## Zasada
 
@@ -113,9 +113,17 @@ Zasady dla orkiestratora:
 - Bez ozdobników: emotek, nadmiaru nagłówków i pogrubień, wyliczanek tam,
   gdzie wystarczy zdanie, pytań do czytelnika na końcu.
 
-Granica wiedzy własnej modelu: **liczby i zalecenia tylko z książek;
-uzasadnienia („…bo to sprzyja chorobom") model może dopisać sam**, także
-gdy książka ich nie podaje.
+Granica wiedzy własnej modelu (zmiana 2026-10-03): książki to baza wiedzy,
+nie jedyne źródło każdego zdania — odpowiedź ma się czytać jak tekst redakcji,
+nie kolaż cytatów. **Liczby, dawki, stężenia, terminy, temperatury i nazwy
+środków ochrony roślin tylko z książek, ze znacznikiem.** Wyjaśnienia,
+łączniki i oczywiste kroki praktyczne („opłucz i wysiej", „…bo to sprzyja
+chorobom") model może dopisać sam, bez znacznika — zdanie bez znacznika
+redaktor czyta jako dopisek modelu. Gdy książki na pytanie w ogóle nie
+odpowiadają — „nie ma w zaznaczonych książkach", bez uzupełniania.
+Wcześniej: „liczby i zalecenia tylko z książek"; zmienione po tym, jak
+instrukcja z dopisanym „opłucz i wysiej" została uznana za błąd, choć to
+dokładnie ten rodzaj uzupełnienia, który ma zostać.
 
 Do sprawdzenia z klientem w etapie 4: pokazać 2–3 odpowiedzi z testów
 i zapytać, czy o taki styl chodzi.
@@ -419,6 +427,42 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   „nasiona / ziemia" (do odrzucenia przez redaktora). Temperatura gleby —
   subagent za pierwszym razem nie zauważył „ok. 15°C", spór zgłoszony
   dopiero przy drugim pytaniu.
+
+## Ustalone przy etapie 6 (2026-10-03)
+
+- Panel: `app/api/` (FastAPI + Jinja2, wygląd i skrypty z ogrodnik4),
+  logowanie Basic jak w ogrodnik4; puste `AUTH_*` w `.env` = nikt nie wchodzi
+  (503), a nie „wchodzi każdy".
+- Uruchomienie: `uvicorn app.api.main:app` + `python -m app.worker` (osobny
+  proces: bierze z SQLite wiadomości i zadania „czeka", 3 naraz; po
+  restarcie „w_toku" wraca do kolejki). Bez Redisa i RQ.
+- SQLite: `rozmowy`, `rozmowa_ksiazki` (zakres; zmiana od następnego
+  pytania), `wiadomosci` (zakres w chwili pytania, ślad JSON, ręczna
+  poprawka), `zadania` (przetworz | przewodnik).
+- Pracownia: zakres z kategoriami (zaznaczenie kategorii jednym
+  kliknięciem, książka z kilkoma kategoriami w każdej grupie), znaczniki
+  `[id s. N]` jako tytuł książki + linki do stron, `[U17]` jako etykieta
+  „spór" / „ustalenie redakcji" / „to nie spór" — według stanu sporu
+  w chwili powstania odpowiedzi (stare odpowiedzi się nie zmieniają).
+  Podgląd strony: zwykły tekst z zaznaczonymi liczbami ze zdania przy
+  znaczniku (podświetlenie, nie kontrola), etykieta tabeli / OCR,
+  poprzednia / następna strona. Ramka sporu pod odpowiedzią. Ręczna
+  poprawka (tekst ze znacznikami; escape — bez HTML-a z bazy) i kopiowanie
+  bez znaczników. Odpowiedź w toku: strona sprawdza stan co 3 s
+  i przeładowuje się dopiero, gdy gotowa.
+- Biblioteka: karty jak w ogrodnik4, kategorie jako filtr, dodawanie PDF
+  albo tekstu (przetwarzanie i przewodnik w tle), edycja, ponowne
+  przetworzenie (przewodnik zostaje), informacja o nieodczytanych tabelach.
+  Ekran książki: strony z oznaczeniem tabela / OCR, tekst strony, edycja
+  przewodnika i „wygeneruj od nowa".
+- Do ustalenia: otwarte (A / B / własna / to nie spór), rozstrzygnięte,
+  odrzucone.
+- Sprawdzone w przeglądarce 2026-10-03 (lokalnie, prawdziwe książki):
+  pytanie → odpowiedź ze znacznikami → podgląd strony → rozstrzygnięcie
+  w ramce → kolejna odpowiedź z „ustalenie redakcji · U1".
+- Znany błąd modelu: w „instrukcji dla czytelników" agent dopisał „opłucz
+  wodą i wysiej" — tego nie ma w książce (zasada jest w prompcie;
+  `gpt-5.4-mini` ją łamie przy formach pisanych).
 
 ## Otwarte
 
