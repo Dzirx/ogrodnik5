@@ -1,0 +1,28 @@
+# Panel i proces roboczy z jednego obrazu; książki i baza w ./data
+# (kopia zapasowa = kopia tego katalogu). Bez Postgresa, Qdranta, Redisa, MinIO.
+#
+#   docker compose up -d --build
+#   http://127.0.0.1:${PORT:-8005}  (login i hasło z .env: AUTH_USERNAME / AUTH_PASSWORD)
+
+x-wspolne: &wspolne
+  build: .
+  image: ogrodnik5
+  env_file: .env
+  volumes:
+    - ./data:/srv/app/data
+  # Pliki w ./data należą do użytkownika, nie do roota z kontenera —
+  # inaczej lokalne skrypty (python -m app.ingest …) nie mogłyby ich zmienić.
+  user: "${UID:-1000}:${GID:-1000}"
+  restart: unless-stopped
+
+services:
+  panel:
+    <<: *wspolne
+    command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+    # Tylko localhost: na serwerze przed panelem stoi reverse proxy z HTTPS.
+    ports:
+      - "127.0.0.1:${PORT:-8005}:8000"
+
+  worker:
+    <<: *wspolne
+    command: python -m app.worker
