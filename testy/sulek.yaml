@@ -170,7 +170,8 @@
     - {temat: "pikowanie i temperatura rozsady", strony: [20]}
     - {temat: "hartowanie, jak wygląda dobra rozsada", strony: [21]}
     - {temat: "typowe błędy", strony: [22]}
-  nie_wolno: ["miesiąc siewu", "zalecenia spoza książki"]
+    - {temat: "termin siewu: połowa marca pod osłonami, koniec marca w gruncie", strony: [17]}
+  nie_wolno: ["miesiąc spoza książki (luty, kwiecień)", "zalecenia spoza książki"]
 
 - id: post-tunel
   rodzaj: szerokie

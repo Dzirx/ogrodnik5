@@ -87,7 +87,8 @@ def _wykonaj(narzedzie: Narzedzie, argumenty: str, slad: Slad, kto: str) -> str:
     except Exception as e:  # zły argument od modelu — oddajemy mu błąd, niech poprawi
         arg, wynik = argumenty, {"blad": f"{type(e).__name__}: {e}"}
     tekst = wynik if isinstance(wynik, str) else json.dumps(wynik, ensure_ascii=False)
-    slad.zdarzenie(kto=kto, narzedzie=narzedzie.nazwa, argumenty=arg, znakow=len(tekst))
+    blad = {"blad": wynik["blad"]} if isinstance(wynik, dict) and "blad" in wynik else {}
+    slad.zdarzenie(kto=kto, narzedzie=narzedzie.nazwa, argumenty=arg, znakow=len(tekst), **blad)
     return tekst
 
 

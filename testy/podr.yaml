@@ -1,0 +1,206 @@
+# Pytania testowe do książki podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami
+# (broszura PODR w Lubaniu, 51 stron).
+#
+# Jak w sulek.yaml: to nie jest lista pytań klienta. Każde pytanie sprawdza
+# jedną WŁAŚCIWOŚĆ:
+#   konkret        - liczba z warunkiem, z właściwej strony
+#   laik           - słowa pytającego inne niż słowa książki (sprawdzone grepem:
+#                    słowa pytającego nie ma w strony/*.txt, termin książki jest)
+#   granica        - odpowiedź rozłożona na kilka stron albo rozdziałów
+#   dwie-wartosci  - książka podaje dwie wartości w różnych warunkach (to nie spór)
+#   brak           - książka tego nie mówi; poprawna odpowiedź to "nie ma"
+#   tabela         - wartość z bloku tabeli (meta.json: strony_tabela)
+#   szerokie       - artykuł, post, lista; liczy się pokrycie tematów
+#   doprecyzowanie - drugie pytanie zależy od pierwszego
+#
+# Pola jak w sulek.yaml: musi / strony / nie_wolno / pokrycie / uwagi / rozmowa.
+#
+# Wszystkie wartości sprawdzone w strony/*.txt (numer pliku = numer strony),
+# 2026-10-02. OCR w tej książce ma tylko s. 50 (dane kontaktowe) - żadne
+# pytanie z niej nie korzysta. Tabela: s. 10.
+#
+# Uwaga do przewodnika ksiazka.md (stan 2026-10-02): od s. 41 mapa stron jest
+# przesunięta o jedną stronę w dół (np. "42 wciornastek" - w pliku 43,
+# "43 przędziorek" - 44, "47 zasady ochrony" - 48). Pytania niżej podają
+# strony z plików, nie z przewodnika.
+
+- id: temperatura-rozsady
+  rodzaj: konkret
+  pytanie: W jakiej temperaturze prowadzić rozsadę pomidorów?
+  musi:
+    - "do wschodu siewek 22–25ºC"
+    - "po wschodach można obniżyć do 16–20ºC"
+    - "dla roślin przesadzonych do doniczek lub tunelu optymalnie 18–22ºC"
+  strony: [12]
+  nie_wolno: ["jedna temperatura bez rozróżnienia etapu"]
+
+- id: system-sadzenia
+  rodzaj: konkret
+  pytanie: W jakich odstępach sadzić pomidory w tunelu?
+  musi:
+    - "system pasowo-rzędowy: dwa rzędy w pasie co 50–60 cm"
+    - "przejście między pasami 90–100 cm"
+    - "w rzędzie 40–50 cm między roślinami"
+    - "przy innym sposobie nie więcej niż 3–3,5 rośliny na 1 m² powierzchni tunelu"
+  strony: [15]
+
+- id: oglawianie
+  rodzaj: konkret
+  pytanie: Kiedy ogłowić pomidory w nieogrzewanym tunelu?
+  musi:
+    - "na 7–8 tygodni przed planowanym zakończeniem uprawy"
+    - "w nieogrzewanych pomieszczeniach nie później niż 15 sierpnia"
+    - "nad ostatnim rozwiniętym kwiatostanem zostawić 2–3 liście"
+  strony: [20]
+  uwagi: >
+    Strona 20 ma nagłówek "PRODUKCJA ROZSADY" (błąd składu w oryginale);
+    przewodnik ostrzega o tym w "Pułapkach". Test sprawdza, czy model nie
+    odrzuci strony z powodu nagłówka.
+
+- id: ec-pozywki
+  rodzaj: konkret
+  pytanie: Jakie EC powinna mieć pożywka dla pomidorów w uprawie bezglebowej?
+  musi:
+    - "EC od 2,7 do 3,5 mS/cm, w zależności od fazy wzrostu"
+    - "w matach uprawowych nieco wyżej, ok. 2,8–4,2 mS/cm"
+  strony: [17]
+  nie_wolno: ["jedna wartość EC bez rozróżnienia mat"]
+
+- id: zielone-ramiona
+  rodzaj: laik
+  pytanie: Moje pomidory mają zielone ramiona – góra owocu przy szypułce nie chce się zaczerwienić. Co to jest?
+  musi:
+    - "zielona i żółta piętka - objaw niedoboru potasu"
+    - "potas: brak hamuje syntezę likopenu i opóźnia zanikanie chlorofilu"
+    - "nasilone przy nadmiarze azotu, przy nasadzie owocu"
+    - "inna przyczyna nierównego wybarwienia: temperatura powyżej 32°C przez kilka godzin dziennie (ceglaste plamy)"
+  strony: [29]
+  uwagi: >
+    Grep: "ramion", "zaczerwien" - 0 trafień; książka mówi "piętka",
+    "nasadzie owocu", "wybarwi". Wolno dodać dokarmianie siarczanem potasu
+    100 g/10 m² co 3 dni (s. 17) - to już granica, nie wymóg.
+
+- id: liscie-w-trabki
+  rodzaj: laik
+  pytanie: Liście moich pomidorów zwijają się w trąbki, choć podlewam je codziennie. Dlaczego?
+  musi:
+    - "liście zwinięte w rulony - objaw niedożywienia (s. 27)"
+    - "przyczyna: obfite podlewanie wymywa składniki ze strefy korzeni; w roślinie za dużo wapnia (s. 28)"
+    - "podlać nawozem wieloskładnikowym z dużą ilością azotu (np. rozcieńczona gnojówka), potem przyzwyczajać do rzadszego podlewania (s. 28)"
+    - "odróżnić od przenawożenia azotem (baranie rogi, ciemne wierzchołki, s. 26) i od zwijania tylko dolnych liści przy zasoleniu (s. 28)"
+  strony: [26, 27, 28]
+  uwagi: >
+    Grep: "trąb", "rurk" - 0 trafień; książka mówi "rulony", "baranich rogów".
+    "Codziennie" w pytaniu to wskazówka prowadząca do s. 28 (nadmierne
+    podlewanie) - odpowiedź z samej s. 26 jest niepełna.
+
+- id: podloze-rozsady
+  rodzaj: granica
+  pytanie: Jakie podłoże przygotować do produkcji rozsady pomidorów?
+  musi:
+    - "kiełkownik: ziemia kompostowa albo gotowa ziemia uniwersalna lub do wysiewu, na bazie torfu, z makro- i mikroelementami (s. 12)"
+    - "do pikowania lekkie i przewiewne podłoże wzbogacone nawozem wieloskładnikowym (s. 13)"
+    - "ziemia do produkcji rozsady odkażona termicznie: parować w 90°C przez 30 minut (s. 42)"
+  strony: [12, 13, 42]
+  uwagi: >
+    Odkażanie ziemi stoi na s. 42, w rozdziale o bakteryjnej cętkowatości,
+    a nie przy rozsadzie. Przewodnik tego nie wskazuje: w wierszu rozsady
+    (12–13) nie ma "odkaż"/"parow", a słowo "odkażona" przypisuje do
+    s. 40–41 (przesunięcie mapy). Test sprawdza, czy model sam łączy rozdziały.
+
+- id: usuwanie-pedow
+  rodzaj: granica
+  pytanie: Jak usuwać pędy boczne, żeby nie zaszkodzić pomidorom?
+  musi:
+    - "wyłamywać we wczesnej fazie, gdy mają nie więcej niż 2–3 cm (s. 18)"
+    - "nie używać noża - przenosi choroby (s. 18)"
+    - "odłamywać tak, aby miejsca złamania nie dotykać palcami (s. 41, rak bakteryjny)"
+    - "prace pielęgnacyjne, m.in. usuwanie pędów, roznoszą raka bakteryjnego; bakteria wnika przez zranienia (s. 39)"
+  strony: [18, 39, 41]
+  uwagi: >
+    Zalecenie o palcach jest tylko na s. 41, w profilaktyce raka bakteryjnego;
+    przewodnik łączy "pędów bocznych" wyłącznie z s. 17–18.
+
+- id: ph
+  rodzaj: dwie-wartosci
+  pytanie: Jakie pH utrzymywać w uprawie pomidorów pod osłonami?
+  musi:
+    - "podłoże w tunelu: pH 6,0–6,5, podnosić kredą nawozową, najlepiej jesienią (s. 16)"
+    - "torf w pierścieniach: odkwaszony, pH 6–6,5 (s. 14)"
+    - "pożywka w uprawie bezglebowej: pH 5,5–5,8 (s. 17)"
+    - "obie wartości, każda ze swoim warunkiem (gleba/torf kontra pożywka)"
+  strony: [14, 16, 17]
+  nie_wolno: ["jedna wartość bez drugiej", "przedstawienie tego jako sprzeczności", "zgłoszenie sporu"]
+
+- id: podlewanie-ile
+  rodzaj: brak
+  pytanie: Ile litrów wody dawać jednemu pomidorowi w tunelu i jak często?
+  musi:
+    - "książka nie podaje ilości wody ani częstotliwości podlewania"
+    - "podaje zasadę: rzadziej, ale intensywniej; zależnie od fazy (najwięcej po posadzeniu, mniej w kwitnieniu, więcej przy zawiązywaniu i owocowaniu) i nasłonecznienia (s. 16)"
+  strony: [16]
+  nie_wolno:
+    - "jakakolwiek liczba litrów lub dni jako zalecenie podlewania"
+    - "przeniesienie dawki gnojówki (2–3 l na roślinę co 3–4 dni, s. 17) na podlewanie wodą"
+  uwagi: >
+    Kuszący: model zna z wiedzy ogólnej typowe dawki wody, a na s. 17 stoją
+    liczby "2–3 litry na roślinę, co 3–4 dni" - ale dla rozcieńczonej
+    gnojówki. Grep: "litr" tylko s. 17 (gnojówka), "razy w tygodniu" tylko
+    s. 4 (spożycie pomidorów).
+
+- id: termin-siewu
+  rodzaj: brak
+  pytanie: W którym miesiącu siać pomidory na rozsadę do tunelu?
+  musi:
+    - "podpowiedź poza zakresem: książka, która podaje termin siewu (np. Sułek s. 17), z kilkoma stronami — zaznaczyć? (proces.md, Pytanie pkt 5)"
+    - "książka nie podaje terminu siewu"
+    - "podaje czas przygotowania rozsady 6–8 tygodni (s. 13) i termin sadzenia: koniec kwietnia, najlepiej początek maja (s. 14)"
+  strony: [13, 14]
+  nie_wolno: ["miesiąc siewu (np. marzec) przedstawiony jako zalecenie książki"]
+  uwagi: >
+    Grep: "marc" - brak, "lut" tylko "Tuta absoluta" (s. 43); "kwietni"
+    tylko s. 14 (sadzenie) i s. 35 (zaraza). Model może zaznaczyć, że to
+    jego wyliczenie, ale nie jako liczbę z książki. Przewodnik ma w "Czego tu
+    nie ma": "Brak osobnego kalendarza siewu". W sulek-pomidory termin jest
+    (s. 17) - patrz dwie-ksiazki.yaml.
+
+- id: oznaczenie-zarazy
+  rodzaj: tabela
+  pytanie: Jak na opakowaniu nasion oznacza się odporność odmiany na zarazę ziemniaczaną?
+  musi:
+    - "nowe oznaczenie Pi, stare (Ph)"
+    - "to tolerancja na zarazę ziemniaczaną (Phytophthora infestans), nie odporność"
+  strony: [10]
+  nie_wolno: ["nazwanie Pi pełną odpornością"]
+  uwagi: >
+    Strona 10 to blok tabeli odczytany automatycznie (odczyt_tabel: ok).
+    W tabeli Fol i For mają to samo stare oznaczenie "Fr" - prawdopodobnie
+    błąd odczytu albo oryginału; dlatego pytanie dotyczy Pi. Wolno dodać,
+    że nie ma odmian odpornych na szarą pleśń (s. 9).
+
+- id: lista-szkodnikow
+  rodzaj: szerokie
+  pytanie: Wypisz szkodniki pomidora pod osłonami opisane w książce i sposoby ich zwalczania.
+  pokrycie:
+    - {temat: "integrowana ochrona: najpierw metody niechemiczne, lustracja, tablice lepowe, pułapki feromonowe", strony: [43]}
+    - {temat: "wciornastek zachodni (przenosi wirusa brązowej plamistości)", strony: [43]}
+    - {temat: "przędziorek chmielowiec (lustracje co najmniej raz w tygodniu)", strony: [44]}
+    - {temat: "mszyce (spadź, grzyby sadzakowe, wektory wirusów)", strony: [45]}
+    - {temat: "skośnik pomidorowy (feromony Tutatec)", strony: [46]}
+    - {temat: "gąsienice piętnówek i błyszczki jarzynówki (Bacillus thuringiensis)", strony: [47]}
+    - {temat: "organizmy pożyteczne: Macrolophus pygmaeus, Encarsia formosa na mączlika; nicienie", strony: [47]}
+  nie_wolno: ["dawki i karencje środków (książka ich nie podaje)", "szkodniki spoza książki (np. ślimaki)"]
+  uwagi: >
+    Przewodnik podaje te tematy o jedną stronę za wcześnie (42–46 zamiast
+    43–47). Test sprawdza, czy model cytuje strony z plików.
+
+- id: szara-plesn-interwal
+  rodzaj: doprecyzowanie
+  rozmowa:
+    - Jakie środki są zarejestrowane na szarą pleśń w pomidorach pod osłonami?
+    - a co ile dni pryskać?
+  musi:
+    - "drugie pytanie dotyczy szarej pleśni"
+    - "preparaty stosować przemiennie (z różnych grup chemicznych), co 7–10 dni"
+  strony: [34]
+  nie_wolno: ["co 7 dni (to preparaty miedziowe przy raku bakteryjnym, s. 41)"]

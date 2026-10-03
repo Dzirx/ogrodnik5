@@ -24,8 +24,12 @@ odpowiedzi na pytania ogrodników. Tamten model ma tylko dwa narzędzia: grep po
 stron (dokładne słowa, bez odmiany i synonimów) i czytanie wskazanych stron. Przewodnik
 mówi mu, GDZIE szukać i POD JAKIMI SŁOWAMI — nie zawiera treści książki.
 
-Tekst książki masz niżej, strona po stronie, ze znacznikami „=== STRONA N ===".
+Tekst książki masz niżej, strona po stronie, między znacznikami „=== STRONA N ==="
+i „=== KONIEC STRONY N ===".
 Numery stron to numery stron pliku (od 1), nie numery wydrukowane w książce.
+Wiele stron zaczyna się od wydrukowanego numeru (np. „42 OCHRONA PRZED…" pod
+znacznikiem „=== STRONA 43 ==="). Ten numer IGNORUJ — w mapie stron zawsze
+numer ze znacznika, nad którym stoi tekst.
 
 Napisz przewodnik w Markdown, dokładnie w tym układzie:
 
@@ -51,6 +55,8 @@ brak jest pewny po przeczytaniu całości. To oszczędza szukania na darmo.
 |--------|-------|-----------------|
 
 Jeden wiersz na spójny temat; zakres stron („14–16"), gdy temat przechodzi przez strony.
+Wiersz obejmuje najwyżej 3 strony — dłuższy rozdział (np. „Choroby" na 10 stronach)
+podziel na wiersze po jednej chorobie, problemie albo zabiegu.
 Pokryj wszystkie strony z treścią. „Temat" nazywa, o czym jest strona, nie podaje
 wartości — bez liczb, dawek, terminów i zaleceń (te model przeczyta ze strony).
 „Szukaj też jako": 2–6 słów lub krótkich fraz, które DOSŁOWNIE stoją na tych stronach
@@ -92,7 +98,13 @@ def _tekst_stron(id: str, od: int, do: int) -> str:
     czesci = []
     for n in range(od, do + 1):
         tekst = (kat / f"{n:04d}.txt").read_text(encoding="utf-8").strip()
-        czesci.append(f"=== STRONA {n} ===\n{tekst or '(brak tekstu — strona bez treści albo same zdjęcia)'}")
+        # Znacznik też na końcu: broszury drukują własny numer na początku
+        # strony (PODR: „42 OCHRONA…" pod znacznikiem 43) i model brał go
+        # zamiast numeru pliku — cała mapa od s. 40 była przesunięta o jeden.
+        czesci.append(
+            f"=== STRONA {n} ===\n{tekst or '(brak tekstu — strona bez treści albo same zdjęcia)'}"
+            f"\n=== KONIEC STRONY {n} ==="
+        )
     return "\n\n".join(czesci)
 
 

@@ -26,10 +26,12 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
   przegląd przewodników przez człowieka.
 - Etap 3 gotowy (2026-10-02): `app/agent/narzedzia.py` — szukaj,
   czytaj_strony, przewodnik, poza_zakresem; testy, w tym na Sułku.
-- Etap 4 prawie gotowy (2026-10-02): agent w `app/agent/`, testy
-  `testy/uruchom.py`, modele `gpt-5.4-mini`. Zostało z kryteriów: pytania
-  testowe do drugiej książki (np. PODR). Wyniki: `testy/wyniki/` (poza gitem).
-- Następny krok: pytania do PODR, potem etap 5 (spory).
+- Etap 4 gotowy (2026-10-03): agent w `app/agent/`, testy `testy/uruchom.py`
+  (`testy/sulek.yaml`, `podr.yaml`, `dwie-ksiazki.yaml`), modele
+  `gpt-5.4-mini`. Wyniki: `testy/wyniki/` (poza gitem). Pełny przebieg
+  testów ≈ $0,80 — tylko za zgodą właściciela; poprawki na `--tylko`.
+- Następny krok: etap 5 (spory). Najpierw rozstrzygnąć test
+  dlugosc-pedow-bocznych (proces.md, „Otwarte").
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
   `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane

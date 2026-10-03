@@ -1,6 +1,6 @@
 # Ogrodnik 5 — jak działa
 
-Stan: etapy 0–4 zrobione (etap 4 bez pytań do drugiej książki), następny etap 5. Ustalenia z 1–2 października 2026.
+Stan: etapy 0–4 zrobione, następny etap 5 (spory). Ustalenia z 1–2 października 2026.
 
 ## Zasada
 
@@ -313,6 +313,13 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
 - Kolumna „Szukaj też jako": pojedyncze słowa albo rdzenie („pikow",
   „zapraw"), nie frazy — łamanie linii i OCR rozbijają frazy w tekście.
   Po tej zmianie 98–100% słów stoi dosłownie w tekście książek.
+- Znacznik strony także na końcu (`=== KONIEC STRONY N ===`). Bez niego
+  model przewodnika (także `gpt-5.5`) brał numer wydrukowany na początku
+  strony zamiast numeru pliku — w PODR cała mapa od s. 40 była przesunięta
+  o jeden. Sama instrukcja w prompcie nie pomogła (było gorzej), znacznik
+  końca tak: 0 przesuniętych wierszy.
+- Wiersz mapy najwyżej 3 strony — bez tego `gpt-5.4-mini` sklejał rozdział
+  chorób (s. 22–31) w jeden wiersz. Model nie zawsze słucha (PODR: 22–28).
 - Ręczny wzorzec ma błędy względem pełnego tekstu (np. s. 3 to gleba, nie
   rozsada; s. 35 bez „wybarwiania"; słowa w formie słownikowej, których grep
   nie trafi: „przepikowanie", „hartowanie", „przymrozki").
@@ -362,6 +369,21 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   z liczbą, stronę podaje tylko z przeczytanego tekstu, zachowuje tryb autora
   („utrudnia", nie „nie zawiązuje"). Efekt: obcinanie-czubkow i
   podlewanie-kroplowe pełne, „Jeśli chcesz…" z 6 do 1 odpowiedzi.
+- Druga runda poprawek (2026-10-03): raport subagenta w dwóch częściach
+  (ODPOWIEDŹ WPROST — linia na stronę, potem TŁO), orkiestrator przenosi
+  każdy punkt pierwszej części; tytuły książek w kontekście orkiestratora;
+  `poza_zakresem` zwraca najwyżej 5 stron (z największą liczbą trafień)
+  i 3 książki. Na 6 testach, które wcześniej gubiły fakty: 5 w pełni.
+- Rozrzut między przebiegami jest duży — ten sam test raz przechodzi, raz
+  nie. Pojedynczy przebieg nie rozstrzyga o poprawce promptu.
+- Podpowiedź „zaznaczyć?" niestabilna z `gpt-5.4-mini` jako orkiestratorem:
+  w trzech przebiegach termin-siewu raz zła książka z 22 stronami, raz
+  ogólnik bez tytułu, raz brak (model sam wyliczył „marzec" z 6–8 tygodni).
+  Decyzja właściciela 2026-10-03: zostawiamy tak — podpowiedź to dodatek,
+  odpowiedź bez niej jest poprawna. Wracamy przy panelu.
+- Koszt testów: pełny przebieg 38 pytań ≈ $0,80. Od 2026-10-03 poprawki
+  sprawdzamy na wybranych testach (`--tylko`), pełny zestaw przed
+  zamknięciem etapu i za zgodą właściciela.
 - Znany błąd: temperatura-zawiazywania z `gpt-5.4-mini` czyta tylko s. 34
   (przewodnik przypisuje tam zawiązywanie) i pomija „poniżej 14°" z s. 31.
 - Testy poprawione po pełnym tekście z OCR: kiedy-siac (s. 17 podaje marzec
@@ -369,6 +391,11 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   lista-chorob („wybarwianie" z s. 35 nie istnieje w tekście).
 
 ## Otwarte
+
+- Czy „pędy boczne: Sułek s. 26 zanim osiągną 10 cm / PODR s. 18 nie więcej
+  niż 2–3 cm" to spór (`testy/dwie-ksiazki.yaml`, dlugosc-pedow-bocznych)?
+  Obie wartości to górne granice, 2–3 cm mieści się w „przed 10 cm" — wg
+  reguły o zazębianiu raczej nie spór. Rozstrzygnąć przed etapem 5.
 
 - Budżet pętli — trudno powiedzieć z góry. Zaczynamy od luźnego limitu
   i ustalamy na podstawie śladów z testów.

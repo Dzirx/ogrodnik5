@@ -17,6 +17,9 @@ from app.ingest import zapis
 # Ile znaków wokół trafienia. Okno znaków, nie linijki: tekst z PDF ma
 # łamanie co kilka słów, a tabela z modelu to jedna długa linia na pole.
 KONTEKST = 200
+# Podpowiedź „zaznaczyć?" ma wskazać, gdzie jest temat, a nie wyliczać wszystko.
+POZA_ZAKRESEM_STRON = 5
+POZA_ZAKRESEM_KSIAZEK = 3
 
 
 @dataclass(frozen=True)
@@ -144,7 +147,17 @@ def poza_zakresem(zakres: Zakres, fraza: str) -> dict:
     for id in _wszystkie():
         if id in zakres:
             continue
-        strony = [s for s, _, _ in _trafienia(id, fraza)]
-        if strony:
-            wynik.append({"ksiazka": id, "tytul": zapis.czytaj_meta(id).get("tytul", id), "strony": strony})
-    return {"fraza": fraza, "poza_zakresem": wynik}
+        trafione = _trafienia(id, fraza)
+        if trafione:
+            # Strony z największą liczbą trafień — tam temat jest, a nie tylko
+            # wspomniany. Bez limitu podpowiedź wymieniała 22 strony.
+            najlepsze = sorted(trafione, key=lambda t: -t[1])[:POZA_ZAKRESEM_STRON]
+            wynik.append({
+                "ksiazka": id,
+                "tytul": zapis.czytaj_meta(id).get("tytul", id),
+                "strony": sorted(s for s, _, _ in najlepsze),
+                "stron_z_trafieniem": len(trafione),
+                "_trafien": sum(ile for _, ile, _ in trafione),
+            })
+    wynik.sort(key=lambda w: -w.pop("_trafien"))
+    return {"fraza": fraza, "poza_zakresem": wynik[:POZA_ZAKRESEM_KSIAZEK]}

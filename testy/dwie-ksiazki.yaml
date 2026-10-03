@@ -1,0 +1,89 @@
+# Pytania testowe na zakres dwóch książek: sulek-pomidory
+# i podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami.
+#
+# Przyszły etap "spory": agent zgłasza spór (zglos_spor), gdy książki podają
+# różne wartości tej samej rzeczy w tym samym warunku. Pytania sprawdzają:
+#   spor          - prawdziwy spór; odpowiedź podaje obie wartości ze źródłami
+#                   i zgłasza spór
+#   nie-spor      - wartości różne, ale warunki różne albo zakresy się
+#                   zazębiają; zgłoszenie sporu to błąd
+#   jedna-ksiazka - odpowiada tylko jedna książka; agent mówi, że druga
+#                   tego nie podaje, i nie miesza
+#
+# Pola jak w sulek.yaml, plus "ksiazki" (zakres) i strony w postaci
+# {książka: [strony]}.
+#
+# Wszystkie wartości sprawdzone w strony/*.txt obu książek, 2026-10-02.
+
+- id: dlugosc-pedow-bocznych
+  rodzaj: spor
+  ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
+  pytanie: Do jakiej długości można zostawić pędy boczne (wilki), zanim się je usunie?
+  musi:
+    - "Sułek s. 26: usunąć jak najszybciej, zanim osiągną długość 10 cm"
+    - "PODR s. 18: wyłamywać, gdy ich długość wynosi nie więcej niż 2–3 cm; dłuższe obniżają plony"
+    - "obie wartości z nazwą książki"
+    - "zgłoszenie sporu"
+  strony:
+    sulek-pomidory: [26]
+    podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami: [18]
+  nie_wolno: ["jedna wartość bez drugiej", "uśrednienie albo wybór jednej bez zaznaczenia sporu"]
+  uwagi: >
+    Ta sama rzecz (próg długości pędu bocznego), ten sam warunek (pomidor
+    prowadzony na jeden pęd), różnica pięciokrotna. Sułek s. 26 jest
+    stroną z OCR (meta.json: strony_ocr) - zdanie o 10 cm odczytane czysto.
+    Można bronić, że obie to tylko górne granice ("im wcześniej, tym lepiej"),
+    ale zalecenia dla redaktora są różne - dlatego to spór.
+
+- id: oglawianie-termin
+  rodzaj: nie-spor
+  ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
+  pytanie: Kiedy i jak ogłowić pomidory?
+  musi:
+    - "Sułek s. 28: na początku sierpnia, ściąć za trzecim liściem nad ostatnim kwiatostanem; koniec uprawy 6–8 tygodni po ogłowieniu"
+    - "Sułek s. 12: w tunelu nad 5–6 gronem, w gruncie nad 3–4 gronem"
+    - "PODR s. 20: 7–8 tygodni przed planowanym końcem uprawy, w nieogrzewanych pomieszczeniach nie później niż 15 sierpnia; nad ostatnim kwiatostanem 2–3 liście"
+    - "wartości się zazębiają (początek sierpnia mieści się przed 15 sierpnia; 3 liście mieszczą się w 2–3; 6–8 i 7–8 tygodni)"
+  strony:
+    sulek-pomidory: [12, 28]
+    podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami: [20]
+  nie_wolno: ["zgłoszenie sporu", "przedstawienie książek jako sprzecznych"]
+
+- id: rozstaw-grunt-tunel
+  rodzaj: nie-spor
+  ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
+  pytanie: W jakim rozstawie sadzić pomidory?
+  musi:
+    - "Sułek s. 23 (wysadzanie do gruntu): odmiany wcześniejsze przy palikach lub drutach 80 x 40 cm, odmiany późniejsze 100 x 80 cm"
+    - "PODR s. 15 (pod osłonami): system pasowo-rzędowy - rzędy w pasie co 50–60 cm, przejście 90–100 cm, w rzędzie 40–50 cm; nie więcej niż 3–3,5 rośliny na 1 m² tunelu"
+    - "różne warunki: Sułek rozróżnia odmiany, PODR opisuje tunel i system pasowy"
+  strony:
+    sulek-pomidory: [23]
+    podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami: [15]
+  nie_wolno: ["zgłoszenie sporu", "jeden rozstaw bez warunku"]
+  uwagi: >
+    Najsłabszy z trzech: Sułek s. 23 mówi "do gruntu", co w jego książce
+    obejmuje też tunel z gruntem (s. 12: "uprawy tunelowej"). Odległość
+    w rzędzie (40 cm kontra 40–50 cm) się zazębia, więc i tak nie spór.
+    Jeśli redaktor uzna inaczej - przenieść do "spor".
+
+- id: przedziorek
+  rodzaj: jedna-ksiazka
+  ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
+  pytanie: Jak rozpoznać i zwalczać przędziorka na pomidorach?
+  musi:
+    - "odpowiada tylko PODR; Sułek o przędziorku nic nie mówi"
+    - "objawy: drobne jasne punkty na liściach, delikatna pajęczyna, liście zasychają (PODR s. 44)"
+    - "lustracje co najmniej raz w tygodniu (PODR s. 44)"
+    - "przykładowe środki: Floramite 240 SC, Nissorun Strong 250 SC, Pyranica 20 WP, Ortus 05 SC, Acaramic 018 EC (PODR s. 44)"
+  strony:
+    sulek-pomidory: []
+    podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami: [44]
+  nie_wolno:
+    - "przypisanie czegokolwiek o przędziorku Sułkowi"
+    - "przeniesienie zaleceń Sułka na inne problemy (wentylacja, Trichoderma, gnojówki) jako zwalczania przędziorka"
+    - "zgłoszenie sporu"
+  uwagi: >
+    Grep w sulek-pomidory/strony: "przędzior", "pajęczyn", "roztocz" -
+    0 trafień. Przewodnik PODR podaje przędziorka na s. 43 (przesunięcie
+    mapy) - poprawna strona to 44.

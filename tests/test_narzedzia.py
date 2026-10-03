@@ -34,7 +34,7 @@ def test_ksiazka_spoza_zakresu_niewidoczna(biblioteka):
 def test_poza_zakresem_bez_tekstu(biblioteka):
     a, b = biblioteka
     w = n.poza_zakresem(n.Zakres((a,)), "ogławianie")
-    assert w["poza_zakresem"] == [{"ksiazka": b, "tytul": "Książka B", "strony": [1]}]
+    assert w["poza_zakresem"] == [{"ksiazka": b, "tytul": "Książka B", "strony": [1], "stron_z_trafieniem": 1}]
 
 
 def test_limit_trafien(biblioteka, monkeypatch):
