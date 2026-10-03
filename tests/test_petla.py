@@ -74,3 +74,4 @@ def test_zly_argument_wraca_do_modelu_jako_blad(model):
     kolejka += [_odp(wywolania=[_Wywolanie("1", "szukaj", {"zle": 1})]), _odp("ok")]
     p.petla("m", [], [_narzedzie()], 3, p.Slad(), "test")
     assert "blad" in json.loads(zapytania[1]["messages"][-1]["content"])
+

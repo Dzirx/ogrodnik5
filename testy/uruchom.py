@@ -86,8 +86,10 @@ def raport(wyniki: list[dict]) -> str:
                   f"*Zakres:* {', '.join(w['ksiazki'])}", ""]
         for t in w["tury"]:
             frazy, strony, _, _ = _podsumowanie_sladu(t["slad"])
+            spory = [z["argumenty"] for z in t["slad"]["zdarzenia"] if z.get("narzedzie") == "zglos_spor"]
             linie += [f"**Pytanie:** {t['pytanie']}", "", t["odpowiedz"], "",
-                      f"*Szukał:* {', '.join(frazy) or '—'}  ", f"*Czytał s.:* {', '.join(strony) or '—'}", ""]
+                      f"*Szukał:* {', '.join(frazy) or '—'}  ", f"*Czytał s.:* {', '.join(strony) or '—'}  ",
+                      f"*Zgłosił spór:* {json.dumps(spory, ensure_ascii=False) if spory else '—'}", ""]
         linie.append("**Oczekiwane:**")
         for klucz in ("musi", "nie_wolno"):
             for pozycja in test.get(klucz, []):
@@ -116,12 +118,16 @@ def main() -> None:
     testy = yaml.safe_load(a.plik.read_text(encoding="utf-8"))
     if a.tylko:
         testy = [t for t in testy if t["id"] in a.tylko]
-    with ThreadPoolExecutor(max_workers=a.rownolegle) as pula:
-        wyniki = list(pula.map(lambda t: _przebieg(t, a.ksiazki), testy))
-
     # Sekundy i nazwa pliku: dwa przebiegi w tej samej minucie nadpisywały raport.
     katalog = Path(__file__).parent / "wyniki" / f"{datetime.now():%Y-%m-%d_%H%M%S}_{a.plik.stem}"
     (katalog / "slady").mkdir(parents=True, exist_ok=True)
+    # Własna, pusta baza: spory zgłoszone w testach nie trafiają do bazy
+    # redaktora, a każdy przebieg zaczyna bez wcześniejszych ustaleń.
+    config.DB_PATH = katalog / "ogrodnik.db"
+
+    with ThreadPoolExecutor(max_workers=a.rownolegle) as pula:
+        wyniki = list(pula.map(lambda t: _przebieg(t, a.ksiazki), testy))
+
     for w in wyniki:
         (katalog / "slady" / f"{w['test']['id']}.json").write_text(
             json.dumps(w, ensure_ascii=False, indent=2), encoding="utf-8")

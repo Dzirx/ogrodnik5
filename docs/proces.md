@@ -1,6 +1,6 @@
 # Ogrodnik 5 — jak działa
 
-Stan: etapy 0–4 zrobione, następny etap 5 (spory). Ustalenia z 1–2 października 2026.
+Stan: etapy 0–5 zrobione, następny etap 6 (panel). Ustalenia z 1–2 października 2026.
 
 ## Zasada
 
@@ -256,7 +256,9 @@ Reguły sporu:
   poniżej 16°C utrudnia"),
 - tylko liczby: pH, temperatury, rozstawy, terminy, dawki,
 - ta sama roślina i ten sam warunek (tunel / grunt, etap uprawy),
-- zakresy, które się zazębiają, nie są sporem (pH 5,5–6,5 i 6,0–7,0).
+- zakresy, które się zazębiają, nie są sporem (pH 5,5–6,5 i 6,0–7,0);
+  górne granice też nie (pędy boczne: Sułek „zanim osiągną 10 cm", PODR
+  „nie więcej niż 2–3 cm" — decyzja właściciela 2026-10-03).
 
 Reguły ocenia wyłącznie model. Kod niczego nie sprawdza, tylko zapisuje
 zgłoszenie. Porównywanie wartości w kodzie (regexy, jak `zakres()` w ogrodnik4)
@@ -390,12 +392,36 @@ i 80–100, które „się zazębiają", więc prawdziwy spór o rozstaw by prze
   — to już nie test „brak"), artykul-rozsada (dwa czasy rozsady),
   lista-chorob („wybarwianie" z s. 35 nie istnieje w tekście).
 
+## Ustalone przy etapie 5 (2026-10-03)
+
+- Kod: `app/db.py` (sqlite3, bez SQLAlchemy — dwie tabele, jeden plik),
+  `app/spory.py` (zglos, lista, rozstrzygnij, odrzuc, blok dla modelu; CLI
+  `python -m app.spory lista|pokaz|rozstrzygnij|odrzuc`). Schemat jak wyżej.
+- Orkiestrator dostaje spory zaznaczonych książek (za przewodnikami — nie
+  psują cache), subagent — spory swojej książki z regułami: ustalenie tylko
+  przy tym samym warunku, otwarty z dopiskiem, odrzucony = zwykła wartość.
+- `zglos_spor(czego_dotyczy, warunek, a, b)`; kod pilnuje tylko zakresu.
+- Sprawdzenie sporu: `gpt-5.4-mini` sam z siebie prawie nie wołał
+  `zglos_spor` (1 zgłoszenie na 4, choć pokazywał obie wartości). Gdy zakres
+  ma ≥ 2 książki, a odpowiedź powstała bez zgłoszenia, kod raz pyta model
+  z wymuszonym wyborem `zglos_spor` / `brak_sporu`; przy zgłoszeniu model
+  pisze odpowiedź od nowa z [U..]. Kod nie ocenia, czy spór jest — pyta,
+  bo narzędzie nie zostało użyte. Koszt: jedno wywołanie więcej przy
+  pytaniach z kilku książek (ok. $0,002–0,005).
+- Zaakceptowane przez właściciela 2026-10-03: `zglos_spor` nie tworzy nowego sporu dla
+  tej samej pary (książka, strona) — zwraca istniejący numer i status.
+  Porównuje tylko oznaczenia źródeł, nie wartości. Bez tego ten sam spór
+  wracał przy każdym pytaniu (U2, U3, U4), a ustalenie przepadało.
+- Scenariusze: `python testy/spory.py testy/spory.yaml` (własna baza
+  przebiegu w `testy/wyniki/`). Wynik 2026-10-03: nadmanganian — zgłoszony,
+  nie wraca, po rozstrzygnięciu odpowiedź z przyjętą wartością i [U2],
+  pytanie o ziemię nie przenosi ustalenia, ale model zgłosił fałszywy spór
+  „nasiona / ziemia" (do odrzucenia przez redaktora). Temperatura gleby —
+  subagent za pierwszym razem nie zauważył „ok. 15°C", spór zgłoszony
+  dopiero przy drugim pytaniu.
+
 ## Otwarte
 
-- Czy „pędy boczne: Sułek s. 26 zanim osiągną 10 cm / PODR s. 18 nie więcej
-  niż 2–3 cm" to spór (`testy/dwie-ksiazki.yaml`, dlugosc-pedow-bocznych)?
-  Obie wartości to górne granice, 2–3 cm mieści się w „przed 10 cm" — wg
-  reguły o zazębianiu raczej nie spór. Rozstrzygnąć przed etapem 5.
 
 - Budżet pętli — trudno powiedzieć z góry. Zaczynamy od luźnego limitu
   i ustalamy na podstawie śladów z testów.

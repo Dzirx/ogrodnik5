@@ -9,9 +9,10 @@ historia → pytanie. Na początku nic zmiennego (daty, godziny)."""
 
 from dataclasses import dataclass
 
-from app import config
+from app import config, spory
 from app.agent import narzedzia
-from app.agent.petla import Narzedzie, Slad, petla
+from app.agent import petla as _petla
+from app.agent.petla import Narzedzie, Slad, _wykonaj, petla
 from app.ingest import zapis
 
 SUBAGENT = """Przeszukujesz JEDNĄ książkę: „{tytul}" (id: {id}). Orkiestrator pisze odpowiedź
@@ -68,6 +69,16 @@ Zasady raportu:
 
 PRZEWODNIK PO KSIĄŻCE
 {przewodnik}
+
+SPORY TEJ KSIĄŻKI
+Spory z innymi książkami, które zgłoszono wcześniej (U-numer, status):
+- rozstrzygnięty — gdy zadanie dotyczy tej samej rzeczy w TYM SAMYM warunku
+  (grunt / tunel, etap uprawy, odmiany), oddaj przyjętą wartość z numerem:
+  „s. 23: 100 x 80 cm — ustalenie U17". Ustalenie jest ważniejsze niż książka.
+  Inny warunek — ustalenie nie dotyczy, oddaj wartość z książki bez numeru.
+- otwarty — oddaj wartość z książki z dopiskiem „spór U22 nierozstrzygnięty".
+- odrzucony — to nie spór; oddaj zwykłą wartość z książki.
+{spory}
 """
 
 ORKIESTRATOR = """Odpowiadasz redaktorowi portalu ogrodniczego „Anielskie Ogrody" na podstawie
@@ -135,9 +146,45 @@ Styl:
 - Bez emotek, nadmiaru nagłówków i pogrubień, wyliczanek tam, gdzie wystarczy
   zdanie, i pytań do czytelnika na końcu.
 
+Spory między książkami:
+- Gdy dwie RÓŻNE książki podają różne liczby (pH, temperatura, rozstaw, termin,
+  dawka, stężenie, czas) dla tej samej rzeczy, tej samej rośliny i w tym samym
+  warunku (tunel / grunt, etap uprawy), to jest spór. Zanim napiszesz
+  odpowiedź, MUSISZ wywołać zglos_spor — samo pokazanie obu wartości
+  w odpowiedzi nie wystarcza, bo bez zgłoszenia redaktor nie może go
+  rozstrzygnąć. Jedno zgłoszenie na jedną rzecz (np. stężenie i czas tego
+  samego zabiegu to jeden spór). Potem w odpowiedzi pokaż obie wartości,
+  każdą ze źródłem, a numer [U..] ze zgłoszenia raz, przy tej rzeczy. Odpowiedź nie czeka na
+  decyzję redaktora.
+- To NIE jest spór: dwie wartości z jednej książki, różne warunki, zakresy,
+  które się zazębiają (pH 5,5–6,5 i 6,0–7,0), górne granice („przed 10 cm"
+  i „najwyżej 2–3 cm"). Nie zgłaszaj też sporu, który jest już na liście niżej
+  (w dowolnym statusie) albo który pomocnik oznaczył numerem U.
+- Wartość z ustalenia redakcji oznacz numerem obok źródła: „100 x 80 cm
+  [sulek-pomidory s. 23] [U17]" — panel pokaże przy nim „ustalenie redakcji".
+  Przy sporze otwartym podaj obie wartości ze źródłami i numer [U22].
+
 ZAZNACZONE KSIĄŻKI — PRZEWODNIKI
 {przewodniki}
+
+SPORY ZAZNACZONYCH KSIĄŻEK
+{spory}
 """
+
+
+DOPYTANIE_O_SPOR = """Sprawdź swoją odpowiedź wyżej: czy pokazuje dwie RÓŻNE liczby z dwóch RÓŻNYCH
+książek dla tej samej rzeczy w tym samym warunku (i nie są to zazębiające się zakresy
+ani górne granice)? Jeśli tak — wywołaj zglos_spor (jedno zgłoszenie na rzecz; spór
+już zgłoszony narzędzie rozpozna samo). Jeśli nie — wywołaj brak_sporu."""
+
+PO_ZGLOSZENIU = """Napisz odpowiedź od nowa, z numerem [U..] przy spornej rzeczy — raz, nie przy
+każdej wartości. Gdy spór jest rozstrzygnięty (status w wyniku narzędzia), podaj
+przyjętą wartość jako ustalenie redakcji z jej numerem. Zwróć tylko odpowiedź."""
+
+
+def _openai_petli():
+    # Przez moduł pętli, żeby testy podmieniały jednego klienta.
+    return _petla._openai
 
 
 def _przewodnik(id: str) -> str:
@@ -166,7 +213,10 @@ def subagent(zakres: narzedzia.Zakres, ksiazka: str, zadanie: str, slad: Slad) -
         ),
     ]
     wiadomosci = [
-        {"role": "system", "content": SUBAGENT.format(tytul=tytul, id=ksiazka, przewodnik=_przewodnik(ksiazka))},
+        # Tylko spory tej książki — lista rośnie z liczbą sporów jednej książki,
+        # nie całej biblioteki.
+        {"role": "system", "content": SUBAGENT.format(
+            tytul=tytul, id=ksiazka, przewodnik=_przewodnik(ksiazka), spory=spory.blok([ksiazka]))},
         {"role": "user", "content": zadanie},
     ]
     wynik = petla(config.SUBAGENT_MODEL, wiadomosci, nz, config.SUBAGENT_LIMIT_RUND, slad, kto,
@@ -181,7 +231,8 @@ class Odpowiedz:
     slad: Slad
 
 
-def odpowiedz(ksiazki: list[str], pytanie: str, historia: list[dict] | None = None) -> Odpowiedz:
+def odpowiedz(ksiazki: list[str], pytanie: str, historia: list[dict] | None = None,
+              wiadomosc_id: int | None = None) -> Odpowiedz:
     """historia: wcześniejsze tury rozmowy, [{"role": "user"|"assistant", "content": ...}]."""
     zakres = narzedzia.Zakres(tuple(ksiazki))
     slad = Slad()
@@ -194,7 +245,39 @@ def odpowiedz(ksiazki: list[str], pytanie: str, historia: list[dict] | None = No
             return f'{{"blad": "książka {ksiazka!r} nie jest w zaznaczonym zakresie"}}'
         return subagent(zakres, ksiazka, zadanie, slad)
 
+    zgloszone: list[int] = []
+
+    def zglos_spor(czego_dotyczy: str, warunek: str, a: dict, b: dict) -> dict:
+        # Kod pilnuje tylko zakresu; czy to spór — ocenia model, poprawia redaktor.
+        for opcja in (a, b):
+            if opcja.get("ksiazka") not in zakres:
+                return {"blad": f"książka {opcja.get('ksiazka')!r} nie jest w zaznaczonym zakresie"}
+        if stary := spory.istniejacy([a, b]):
+            zgloszone.append(stary["id"])
+            return {"istnieje": f"U{stary['id']}", "nie_zgloszono_ponownie": True,
+                    "spor": spory.opis(stary)}
+        spor_id = spory.zglos(czego_dotyczy, warunek, [a, b], wiadomosc_id)
+        zgloszone.append(spor_id)
+        return {"zgloszono": f"U{spor_id}"}
+
+    opcja = {"type": "object",
+             "properties": {"ksiazka": {"type": "string", "enum": list(ksiazki)},
+                            "strona": {"type": "integer"}, "wartosc": {"type": "string"}},
+             "required": ["ksiazka", "strona", "wartosc"]}
     nz = [
+        Narzedzie(
+            "zglos_spor",
+            "Zgłasza redaktorowi spór: dwie książki podają różne liczby dla tej samej rzeczy "
+            "w tym samym warunku. Wywołaj ZAWSZE, gdy odpowiedź ma pokazać dwie różne "
+            "wartości z dwóch książek dla tej samej rzeczy i warunku — przed napisaniem "
+            "odpowiedzi. Zwraca numer sporu (U..).",
+            {"type": "object",
+             "properties": {"czego_dotyczy": {"type": "string"},
+                            "warunek": {"type": "string", "description": "np. grunt, tunel, rozsada; puste, gdy ogólne"},
+                            "a": opcja, "b": opcja},
+             "required": ["czego_dotyczy", "warunek", "a", "b"]},
+            zglos_spor,
+        ),
         Narzedzie(
             "zapytaj_ksiazke",
             "Wysyła pomocnika do jednej zaznaczonej książki; oddaje fakty ze stronami. "
@@ -212,7 +295,7 @@ def odpowiedz(ksiazki: list[str], pytanie: str, historia: list[dict] | None = No
         ),
     ]
     wiadomosci = [
-        {"role": "system", "content": ORKIESTRATOR.format(przewodniki=przewodniki)},
+        {"role": "system", "content": ORKIESTRATOR.format(przewodniki=przewodniki, spory=spory.blok(ksiazki))},
         *(historia or []),
         {"role": "user", "content": pytanie},
     ]
@@ -221,4 +304,35 @@ def odpowiedz(ksiazki: list[str], pytanie: str, historia: list[dict] | None = No
     # to odpowiedź z własnej wiedzy modelu.
     tekst = petla(config.ORKIESTRATOR_MODEL, wiadomosci, nz, config.ORKIESTRATOR_LIMIT_RUND, slad,
                   "orkiestrator", wymus_narzedzie=True)
+    # Model po raportach pomocników pisał odpowiedź z dwiema wartościami i nie
+    # wołał zglos_spor (testy 2026-10-03: 1 zgłoszenie na 4). Kod nie sprawdza,
+    # czy spór jest — pyta raz, z wymuszonym wyborem: zgłoś albo brak.
+    if len(ksiazki) >= 2 and not zgloszone:
+        tekst = _sprawdz_spor(wiadomosci, tekst, nz[0], slad)
     return Odpowiedz(tekst, slad)
+
+
+def _sprawdz_spor(wiadomosci: list[dict], tekst: str, zglos: Narzedzie, slad: Slad) -> str:
+    brak = Narzedzie("brak_sporu", "W odpowiedzi nie ma sporu do zgłoszenia.",
+                     {"type": "object", "properties": {}}, lambda: {"ok": True})
+    wiadomosci += [{"role": "assistant", "content": tekst},
+                   {"role": "user", "content": DOPYTANIE_O_SPOR}]
+    odp = _openai_petli().chat.completions.create(
+        model=config.ORKIESTRATOR_MODEL, messages=wiadomosci,
+        tools=[zglos.schemat(), brak.schemat()], tool_choice="required")
+    slad.zuzyte(odp.model, odp.usage)
+    msg = odp.choices[0].message
+    wywolania = msg.tool_calls or []
+    if not any(tc.function.name == "zglos_spor" for tc in wywolania):
+        slad.zdarzenie(kto="orkiestrator", sprawdzenie_sporu="brak")
+        return tekst
+    wiadomosci.append({"role": "assistant", "content": msg.content,
+                       "tool_calls": [tc.model_dump() for tc in wywolania]})
+    for tc in wywolania:
+        narzedzie = zglos if tc.function.name == "zglos_spor" else brak
+        wiadomosci.append({"role": "tool", "tool_call_id": tc.id,
+                           "content": _wykonaj(narzedzie, tc.function.arguments, slad, "orkiestrator")})
+    wiadomosci.append({"role": "user", "content": PO_ZGLOSZENIU})
+    odp = _openai_petli().chat.completions.create(model=config.ORKIESTRATOR_MODEL, messages=wiadomosci)
+    slad.zuzyte(odp.model, odp.usage)
+    return (odp.choices[0].message.content or tekst).strip()

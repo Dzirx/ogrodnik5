@@ -30,8 +30,10 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
   (`testy/sulek.yaml`, `podr.yaml`, `dwie-ksiazki.yaml`), modele
   `gpt-5.4-mini`. Wyniki: `testy/wyniki/` (poza gitem). Pełny przebieg
   testów ≈ $0,80 — tylko za zgodą właściciela; poprawki na `--tylko`.
-- Następny krok: etap 5 (spory). Najpierw rozstrzygnąć test
-  dlugosc-pedow-bocznych (proces.md, „Otwarte").
+- Etap 5 gotowy (2026-10-03): `app/db.py`, `app/spory.py`, `zglos_spor`
+  w orkiestratorze, scenariusze `testy/spory.py testy/spory.yaml`.
+  Istniejący spór rozpoznawany po parze (książka, strona) — zaakceptowane.
+- Następny krok: etap 6 (panel).
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
   `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane

@@ -1,0 +1,26 @@
+# Scenariusze sporów (etap 5): python testy/spory.py testy/spory.yaml
+#
+# Każdy scenariusz idzie po kolei na własnej bazie przebiegu:
+# pytanie → spór zgłoszony; to samo pytanie → spór nie wraca;
+# rozstrzygnięcie → odpowiedź z [U..]; inny warunek → ustalenie nieprzeniesione.
+# Spory znalezione w tekście stron 2026-10-03 (subagent Claude Code);
+# przed użyciem w odpowiedziach dla klienta — do potwierdzenia przez redaktora.
+
+- id: temperatura-gleby-wysadzanie
+  ksiazki: [sulek-pomidory, pomidory-uprawa-amatorska-w-ogrodzie]
+  pytanie: Do jakiej temperatury musi się nagrzać gleba, zanim wysadzę rozsadę pomidorów do gruntu?
+  rozstrzygnij: "ok. 15°C"
+  oczekiwane: >
+    Spór: Sułek s. 23 „gleba ogrzana do 12–13°C" / Pomidory s. 43 „ok. 15°C"
+    (grunt, sadzenie rozsady). Po rozstrzygnięciu: 15°C ze znacznikiem [U..].
+
+- id: nadmanganian-nasiona
+  ksiazki: [sulek-pomidory, pomidory-uprawa-amatorska-w-ogrodzie]
+  pytanie: Jak odkazić nasiona pomidorów nadmanganianem potasu — jakie stężenie i jak długo moczyć?
+  rozstrzygnij: "1% przez 50 minut"
+  inny_warunek: Jak odkazić nadmanganianem potasu ziemię do wysiewu pomidorów?
+  oczekiwane: >
+    Spór: Sułek s. 39 „1% roztwór, 50 minut" / Pomidory s. 19 „2% roztwór,
+    20 minut" (moczenie nasion). Po rozstrzygnięciu: 1% / 50 min z [U..].
+    Inny warunek (ziemia): Pomidory s. 22 „5 g na 10 l wody, podlewamy
+    podłoże" — BEZ ustalenia dla nasion i bez [U..].

@@ -16,25 +16,21 @@
 # Wszystkie wartości sprawdzone w strony/*.txt obu książek, 2026-10-02.
 
 - id: dlugosc-pedow-bocznych
-  rodzaj: spor
+  rodzaj: nie-spor
   ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
   pytanie: Do jakiej długości można zostawić pędy boczne (wilki), zanim się je usunie?
   musi:
     - "Sułek s. 26: usunąć jak najszybciej, zanim osiągną długość 10 cm"
     - "PODR s. 18: wyłamywać, gdy ich długość wynosi nie więcej niż 2–3 cm; dłuższe obniżają plony"
     - "obie wartości z nazwą książki"
-    - "zgłoszenie sporu"
   strony:
     sulek-pomidory: [26]
     podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami: [18]
-  nie_wolno: ["jedna wartość bez drugiej", "uśrednienie albo wybór jednej bez zaznaczenia sporu"]
+  nie_wolno: ["zgłoszenie sporu", "jedna wartość bez drugiej"]
   uwagi: >
-    Ta sama rzecz (próg długości pędu bocznego), ten sam warunek (pomidor
-    prowadzony na jeden pęd), różnica pięciokrotna. Sułek s. 26 jest
-    stroną z OCR (meta.json: strony_ocr) - zdanie o 10 cm odczytane czysto.
-    Można bronić, że obie to tylko górne granice ("im wcześniej, tym lepiej"),
-    ale zalecenia dla redaktora są różne - dlatego to spór.
-
+    Decyzja właściciela 2026-10-03: to NIE spór — obie wartości to górne
+    granice („im wcześniej, tym lepiej"), 2–3 cm mieści się w „przed 10 cm".
+    Sułek s. 26 jest stroną z OCR - zdanie o 10 cm odczytane czysto.
 - id: oglawianie-termin
   rodzaj: nie-spor
   ksiazki: [sulek-pomidory, podr-innowacyjna-amatorska-uprawa-pomidorow-pod-oslonami]
