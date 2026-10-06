@@ -88,3 +88,101 @@ def test_sulek_limit_stron(monkeypatch):
 def test_sulek_pusta_strona():
     w = n.czytaj_strony(n.Zakres(("sulek-pomidory",)), "sulek-pomidory", 37)
     assert "bez tekstu" in w["strony"][0]["tekst"]
+
+
+def test_warianty_i_warunek_razem_z(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ZRODLA_DIR", tmp_path / "zrodla")
+    id = zapis.wgraj_tekst("x", "K")
+    kat = zapis.katalog(id) / "strony"
+    (kat / "0001.txt").write_text("Nasiona F1 to mieszańce.")
+    (kat / "0002.txt").write_text("Nasienie zbieramy z dojrzałych owoców.")
+    (kat / "0003.txt").write_text("Nasiona wysiewamy w marcu.")
+    meta = zapis.czytaj_meta(id); meta["liczba_stron"] = 3; zapis.zapisz_meta(id, meta)
+    z = n.Zakres((id,))
+    assert [t["strona"] for t in n.szukaj(z, "nasion|nasien")["trafienia"]] == [1, 2, 3]
+    # Warunek „i": tylko strony z „nasion" i jednocześnie z F1 albo mieszańcami.
+    assert [t["strona"] for t in n.szukaj(z, "nasion", razem_z="F1|mieszańc")["trafienia"]] == [1]
+    # Pojedyncze znaki w wariantach są pomijane — „|" na końcu nie trafia wszystkiego.
+    assert n.szukaj(z, "marc|")["stron_z_trafieniem"] == 1
+
+
+def test_kilka_fragmentow_na_stronie(biblioteka):
+    a, _ = biblioteka
+    (zapis.katalog(a) / "strony" / "0001.txt").write_text("pomidor raz. " + "x " * 150 + "pomidor dwa. " + "y " * 150 + "pomidor trzy. pomidor cztery.")
+    import os, time
+    os.utime(zapis.katalog(a) / "meta.json", (time.time() + 10, time.time() + 10))
+    t = n.szukaj(n.Zakres((a,)), "pomidor")["trafienia"][0]
+    assert t["trafien_na_stronie"] == 4 and len(t["fragmenty"]) == 3
+    assert "dwa" in t["fragmenty"][1]
+
+
+# --- rozszerzone szukanie i lista (2026-10-04) ---
+
+@pytest.fixture
+def ksiazka_testowa(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ZRODLA_DIR", tmp_path / "zrodla")
+    id = zapis.wgraj_tekst("x", "Tom")
+    kat = zapis.katalog(id) / "strony"
+    (kat / "0001.txt").write_text("Ogławianie robimy w sierpniu. Ogławiające się odmiany kończą wzrost.")
+    (kat / "0002.txt").write_text("")
+    (kat / "0003.txt").write_text("Pędy boczne usuwamy sekatorem. Ogławianie dotyczy czubka.")
+    (kat / "0004.txt").write_text("Pędy boczne wyłamujemy, nie używamy noża.")
+    meta = zapis.czytaj_meta(id); meta.update(liczba_stron=4, strony_tabela=[3], strony_ocr=[4])
+    zapis.zapisz_meta(id, meta)
+    return id, n.Zakres((id,))
+
+
+def test_regex_lapie_odmiane(ksiazka_testowa):
+    id, z = ksiazka_testowa
+    assert [t["strona"] for t in n.szukaj(z, "ogławianie")["trafienia"]] == [1, 3]           # dosłownie: bez „ogławiające"
+    w = n.szukaj(z, "ogław[^ ]*", regex=True)
+    assert [t["strona"] for t in w["trafienia"]] == [1, 3] and w["trafienia"][0]["trafien_na_stronie"] == 2
+
+
+def test_bez_i_razem_z(ksiazka_testowa):
+    _, z = ksiazka_testowa
+    assert [t["strona"] for t in n.szukaj(z, "pędy boczne", bez="sekator")["trafienia"]] == [4]
+    assert [t["strona"] for t in n.szukaj(z, "ogław", razem_z="czubk")["trafienia"]] == [3]
+
+
+def test_tryby_strony_i_licz(ksiazka_testowa):
+    id, z = ksiazka_testowa
+    assert n.szukaj(z, "ogław", tryb="strony")["ksiazki"] == [{"ksiazka": id, "stron_z_trafieniem": 2, "strony": [1, 3]}]
+    assert n.szukaj(z, "ogław", tryb="licz")["ksiazki"] == [{"ksiazka": id, "stron_z_trafieniem": 2, "trafien": 3}]
+    assert "trafienia" not in n.szukaj(z, "ogław", tryb="strony")           # bez tekstu — tanio
+    assert "blad" in n.szukaj(z, "ogław", tryb="cokolwiek")
+
+
+def test_kontekst(ksiazka_testowa):
+    _, z = ksiazka_testowa
+    krotki = n.szukaj(z, "sekator", kontekst=5)["trafienia"][0]["fragmenty"][0]
+    assert len(krotki) < 30 and "sekator" in krotki
+
+
+def test_zly_regex_daje_blad_a_nie_wyjatek(ksiazka_testowa, monkeypatch):
+    import time
+    _, z = ksiazka_testowa
+    assert "zły wzorzec" in n.szukaj(z, "(niezamknięty", regex=True)["blad"]
+    assert "za długi" in n.szukaj(z, "a" * 400, regex=True)["blad"]
+    # Groźny wzorzec nie może zawiesić procesu: kończy się błędem albo wynikiem, szybko.
+    monkeypatch.setattr(n, "TIMEOUT_REGEX_S", 0.3)
+    id, _ = ksiazka_testowa
+    (zapis.katalog(id) / "strony" / "0002.txt").write_text("a" * 45 + "!")
+    import os; os.utime(zapis.katalog(id) / "meta.json", (time.time() + 10, time.time() + 10))
+    start = time.time()
+    w = n.szukaj(z, "(a|aa)+$", regex=True)
+    assert time.time() - start < 3 and ("blad" in w or "trafienia" in w)
+
+
+def test_lista_ksiazek_i_stron(ksiazka_testowa, biblioteka):
+    id, z = ksiazka_testowa
+    k = n.lista(z)["ksiazki"][0]
+    assert (k["stron"], k["pustych"], k["strony_tabela"], k["strony_ocr"]) == (4, 1, [3], [4])
+    s = n.lista(z, id)["strony"]
+    assert s[0]["poczatek"].startswith("Ogławianie robimy") and s[1] == {"strona": 2, "pusta": True}
+    assert s[2]["tabela"] is True and s[3]["ocr"] is True
+    assert n.lista(z, id, 3, 4)["strony"][0]["strona"] == 3
+    assert "blad" in n.lista(z, id, 9, 12)
+    # Książka spoza zakresu jest niewidoczna dla listy tak samo jak dla szukaj.
+    a, _ = biblioteka
+    assert "blad" in n.lista(z, a)

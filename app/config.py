@@ -24,7 +24,9 @@ _wczytaj_env(ROOT / ".env")
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 ZRODLA_DIR = DATA_DIR / "zrodla"
-DB_PATH = DATA_DIR / "ogrodnik.db"
+# Osobna baza dla prób (testy, eksperymenty z promptem) — żeby spory
+# z prób nie trafiały do bazy redaktora.
+DB_PATH = Path(os.environ.get("DB_PATH") or DATA_DIR / "ogrodnik.db")
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 # Modele wybieramy na testach (etap 4); do tego czasu wartości z ogrodnik4.
@@ -50,15 +52,12 @@ PRZEWODNIK_STRON_NA_KAWALEK = int(os.environ.get("PRZEWODNIK_STRON_NA_KAWALEK", 
 # Limity narzędzi agenta (etap 3). Luźne na start — właściwe ustalimy
 # ze śladów testów w etapie 4.
 SZUKAJ_LIMIT_TRAFIEN = int(os.environ.get("SZUKAJ_LIMIT_TRAFIEN", "20"))
-CZYTAJ_LIMIT_STRON = int(os.environ.get("CZYTAJ_LIMIT_STRON", "5"))
+CZYTAJ_LIMIT_STRON = int(os.environ.get("CZYTAJ_LIMIT_STRON", "8"))
 
 # Agent (etap 4). Modele wybieramy na testach; start od taniego.
 ORKIESTRATOR_MODEL = os.environ.get("ORKIESTRATOR_MODEL") or "gpt-5.4-mini"
-SUBAGENT_MODEL = os.environ.get("SUBAGENT_MODEL") or "gpt-5.4-mini"
 # Budżet: ile rund wywołań narzędzi, zanim kod każe odpowiedzieć z tym, co
 # jest. Luźny na start — właściwy ustalimy ze śladów (proces.md, „Otwarte").
-ORKIESTRATOR_LIMIT_RUND = int(os.environ.get("ORKIESTRATOR_LIMIT_RUND", "6"))
-SUBAGENT_LIMIT_RUND = int(os.environ.get("SUBAGENT_LIMIT_RUND", "12"))
 
 # Ceny za 1M tokenów (wejście, wejście z cache, wyjście) — tylko do raportu
 # kosztu w testach. Model spoza tabeli: koszt nieznany, liczymy same tokeny.
@@ -68,3 +67,29 @@ CENY = {
     # potwierdzenia — przyjęte w tej samej proporcji co mini (×1/10, ×6).
     "gpt-5.4": (2.50, 0.25, 15.00),
 }
+
+# Wariant agenta. „strony" (od 2026-10-06, domyślny): szukacz wskazuje strony, kod
+# wkleja ich tekst, pisarz pisze. „dwa": szukacz zbiera notatki własnymi słowami,
+# pisarz układa tekst. „jeden": jeden agent szuka, czyta i pisze.
+# („pomocnicy" — orkiestrator + subagent na książkę — usunięty 2026-10-06.)
+AGENT = os.environ.get("AGENT") or "strony"
+# Jeden agent sam szuka i czyta, więc potrzebuje więcej rund niż orkiestrator.
+JEDEN_LIMIT_RUND = int(os.environ.get("JEDEN_LIMIT_RUND", "20"))
+
+# Wariant „dwa" (2026-10-06): szukacz zbiera notatki z książek, pisarz układa z nich
+# tekst. Osobne modele: zbieranie jest czytaniem dużych stron (tańszy model),
+# pisanie — małym kontekstem i najważniejszą pracą nad jakością tekstu.
+SZUKACZ_MODEL = os.environ.get("SZUKACZ_MODEL") or "gpt-5.4-mini"
+PISARZ_MODEL = os.environ.get("PISARZ_MODEL") or "gpt-5.4"
+SZUKACZ_LIMIT_RUND = int(os.environ.get("SZUKACZ_LIMIT_RUND", "20"))
+
+# Wariant „strony": ile stron kod wkleja pisarzowi na jedno pytanie. Strony ponad limit
+# odpadają po równo z każdej książki — pisarz dostaje wtedy zwięzły materiał, a koszt
+# jednego pytania ma górną granicę.
+STRONY_LIMIT = int(os.environ.get("STRONY_LIMIT", "12"))
+
+# Wariant „strony": planista (2026-10-06) czyta pytanie z rozmową i ustala dla szukacza,
+# czego szukać, a dla pisarza — jakiej formy chce redaktor. Bez narzędzi i bez książek,
+# jedno krótkie wywołanie. PLANISTA=nie wyłącza krok (porównanie z poprzednim działaniem).
+PLANISTA = (os.environ.get("PLANISTA") or "tak").strip().lower() in ("tak", "1", "true")
+PLANISTA_MODEL = os.environ.get("PLANISTA_MODEL") or "gpt-5.4-mini"

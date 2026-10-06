@@ -67,9 +67,9 @@ def raport(wyniki: list[dict]) -> str:
     linie = [
         f"# Testy {datetime.now():%Y-%m-%d %H:%M}",
         "",
-        f"Książki: {', '.join(ksiazki)}. Orkiestrator: `{config.ORKIESTRATOR_MODEL}`, "
-        f"subagent: `{config.SUBAGENT_MODEL}`. Limity rund: {config.ORKIESTRATOR_LIMIT_RUND} / "
-        f"{config.SUBAGENT_LIMIT_RUND}.",
+        f"Książki: {', '.join(ksiazki)}. Wariant: `{config.AGENT}`, szukacz: "
+        f"`{config.SZUKACZ_MODEL}`, pisarz: `{config.PISARZ_MODEL}`. Limit rund szukacza: "
+        f"{config.SZUKACZ_LIMIT_RUND}.",
         "",
         "| test | rodzaj | czas | narzędzia | koszt | budżet |",
         "|---|---|---|---|---|---|",

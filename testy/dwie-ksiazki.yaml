@@ -83,3 +83,21 @@
     Grep w sulek-pomidory/strony: "przędzior", "pajęczyn", "roztocz" -
     0 trafień. Przewodnik PODR podaje przędziorka na s. 43 (przesunięcie
     mapy) - poprawna strona to 44.
+
+- id: rodzaje-nasion-post
+  rodzaj: doprecyzowanie
+  ksiazki: [sulek-pomidory, pomidory-uprawa-amatorska-w-ogrodzie]
+  rozmowa:
+    - Jakie są rodzaje nasion pomidorów?
+    - napisz mi o tym post na facebooka
+  musi:
+    - "obie książki zapytane (Sułek ma o tym rozdział s. 6–10)"
+    - "Sułek: F1 / mieszańce (s. 6–7), kolekcjonerskie (s. 8–9), GMO jako osobna kwestia (s. 10)"
+    - "Pomidory, uprawa amatorska: F1 to nie GMO (s. 14), z F1 nie zbiera się nasion (s. 15)"
+    - "post gotowy do wklejenia — bez „Jasne, możesz wrzucić…” i komentarza na końcu"
+  nie_wolno:
+    - "strona z przewodnika jednej książki podpisana inną książką (np. „Pomidory… s. 6, 7”)"
+    - "GMO jako rodzaj nasion"
+  uwagi: >
+    Z rozmowy redaktora 2026-10-03: orkiestrator zapytał jedną książkę, a strony
+    6–10 z przewodnika Sułka podpisał „Pomidory, uprawa amatorska”.

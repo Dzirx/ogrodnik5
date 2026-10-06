@@ -8,8 +8,18 @@ from urllib.parse import quote
 
 from markupsafe import Markup, escape
 
-# [sulek-pomidory s. 12, 28] albo [sulek-pomidory s. 13–14]
-ZNACZNIK_ZRODLA = re.compile(r"\[([a-z0-9][a-z0-9-]*) s\. ([\d][\d,\s–-]*)\]")
+# [sulek-pomidory s. 12, 28], [sulek-pomidory s. 13–14] albo — gdy model
+# złamie zasadę „jedna książka w nawiasie" — [a s. 15; b s. 7]. Wyświetlanie
+# ma to znieść: bez tego znacznik został surowym tekstem, bez linku, a książka
+# nie trafiała do listy źródeł.
+_POZYCJA = r"[a-z0-9][a-z0-9-]* s\. \d[\d,\s–-]*"
+ZNACZNIK_ZRODLA = re.compile(rf"\[({_POZYCJA}(?:;\s*{_POZYCJA})*)\]")
+_POZYCJA_RE = re.compile(r"([a-z0-9][a-z0-9-]*) s\. (\d[\d,\s–-]*)")
+
+
+def pozycje(grupa: str) -> list[tuple[str, str]]:
+    """„a s. 15; b s. 7" → [("a", "15"), ("b", "7")]."""
+    return [(m[1], m[2].strip()) for m in _POZYCJA_RE.finditer(grupa)]
 ZNACZNIK_SPORU = re.compile(r"\[U(\d+)\]")
 POGRUBIENIE = re.compile(r"\*\*(.+?)\*\*")
 
@@ -30,7 +40,19 @@ def strony(zapis: str) -> list[int]:
 ETYKIETY_SPORU = {"otwarty": "spór", "rozstrzygniety": "ustalenie redakcji", "odrzucony": "to nie spór"}
 
 
-def _linia(tekst: str, tytuly: dict[str, str], baza_url: str, statusy: dict[int, str]) -> Markup:
+INDEKSY = "¹²³⁴⁵⁶⁷⁸⁹"
+
+
+def numer_ksiazki(numery: dict[str, int], id: str) -> str:
+    """Indeks górny książki w znaczniku — tylko gdy odpowiedź ma kilka książek."""
+    if len(numery) < 2 or id not in numery:
+        return ""
+    n = numery[id]
+    return INDEKSY[n - 1] if n <= len(INDEKSY) else str(n)
+
+
+def _linia(tekst: str, tytuly: dict[str, str], baza_url: str, statusy: dict[int, str],
+           numery: dict[str, int]) -> Markup:
     # Zdanie bez znaczników idzie w linku do podglądu — po nim podgląd
     # zaznacza na stronie liczby, które redaktor chce sprawdzić.
     fraza = quote(ZNACZNIK_SPORU.sub("", ZNACZNIK_ZRODLA.sub("", tekst))[:200])
@@ -38,13 +60,17 @@ def _linia(tekst: str, tytuly: dict[str, str], baza_url: str, statusy: dict[int,
     html = POGRUBIENIE.sub(r"<strong>\1</strong>", html)
 
     def zrodlo(m: re.Match) -> str:
-        id = m[1]
-        tytul = escape(tytuly.get(id, id))
-        linki = ", ".join(
-            f'<a href="{baza_url}?podglad={id}:{n}&amp;f={fraza}" title="{tytul}, strona {n}">{n}</a>'
-            for n in strony(m[2])
-        )
-        return f'<span class="znacznik" title="{tytul}">{tytul} s. {linki}</span>'
+        spany = []
+        for id, zapis_stron in pozycje(m[1]):
+            tytul = escape(tytuly.get(id, id))
+            linki = ", ".join(
+                f'<a href="{baza_url}?podglad={id}:{n}&amp;f={fraza}" title="{tytul}, strona {n}">{n}</a>'
+                for n in strony(zapis_stron)
+            )
+            # Krótko: „s. 14" (i indeks książki, gdy jest ich kilka). Pełny tytuł
+            # przy każdym zdaniu zaśmiecał tekst — jest w podpowiedzi i w źródłach.
+            spany.append(f'<span class="znacznik" title="{tytul}">{numer_ksiazki(numery, id)}s. {linki}</span>')
+        return " ".join(spany)
 
     def spor(m: re.Match) -> str:
         # Etykieta po bieżącym statusie: „ustalenie redakcji" tylko przy
@@ -55,22 +81,65 @@ def _linia(tekst: str, tytuly: dict[str, str], baza_url: str, statusy: dict[int,
                 f'{ETYKIETY_SPORU.get(status, "spór")} · U{m[1]}</a>')
 
     html = ZNACZNIK_ZRODLA.sub(zrodlo, html)
+    # Dwa znaczniki obok siebie ([a s. 61][b s. 26]) sklejały się w „¹s. 61²s. 26".
+    html = html.replace('</span><span class="znacznik"', '</span> <span class="znacznik"')
     html = ZNACZNIK_SPORU.sub(spor, html)
     return Markup(html)
 
 
+def _blok_html(linie: list[str], f) -> str:
+    """Jeden blok tekstu: akapity, listy i podlisty (jeden poziom wcięcia).
+
+    Model pisze „Co się z nimi robi:" i od razu listę, czasem z podpunktami.
+    Wcześniej lista była listą tylko wtedy, gdy WSZYSTKIE linie bloku były
+    punktami — inaczej zostawały surowe myślniki, a podpunkty traciły wcięcie."""
+    wynik, akapit, pozycje = [], [], []
+
+    def zamknij_akapit():
+        if akapit:
+            wynik.append("<p>" + "<br>".join(akapit) + "</p>")
+            akapit.clear()
+
+    def zamknij_liste():
+        if pozycje:
+            glowne: list[list] = []  # [html, [dzieci]]
+            for poziom, html in pozycje:
+                if poziom and glowne:
+                    glowne[-1][1].append(html)
+                else:
+                    glowne.append([html, []])
+            wynik.append("<ul>" + "".join(
+                f"<li>{h}" + (("<ul>" + "".join(f"<li>{d}</li>" for d in dzieci) + "</ul>") if dzieci else "") + "</li>"
+                for h, dzieci in glowne) + "</ul>")
+            pozycje.clear()
+
+    for l in linie:
+        m = re.match(r"^(\s*)[-•*]\s+(.*)$", l)
+        if m:
+            zamknij_akapit()
+            pozycje.append((1 if len(m[1].expandtabs(2)) >= 2 else 0, str(f(m[2]))))
+        else:
+            zamknij_liste()
+            akapit.append(str(f(l.strip())))
+    zamknij_akapit()
+    zamknij_liste()
+    return "".join(wynik)
+
+
 def odpowiedz_html(tekst: str, tytuly: dict[str, str], baza_url: str = "",
                    statusy: dict[int, str] | None = None) -> Markup:
-    """Akapity po pustej linii, linie „- " jako lista. Więcej Markdownu model
-    nie powinien pisać (styl: bez nagłówków i ozdobników)."""
+    """Akapity po pustej linii, listy z „- " (także z podpunktami). Więcej
+    Markdownu model nie powinien pisać (styl: bez nagłówków i ozdobników)."""
+    numery = {id: i for i, id in enumerate(zrodla_odpowiedzi(tekst), start=1)}
+
+    def f(linia: str) -> Markup:
+        return _linia(linia, tytuly, baza_url, statusy or {}, numery)
+
     bloki = []
     for blok in re.split(r"\n\s*\n", tekst.strip()):
         linie = [l for l in blok.splitlines() if l.strip()]
-        if linie and all(re.match(r"\s*[-•*]\s+", l) for l in linie):
-            pozycje = "".join(f"<li>{_linia(re.sub(r'^\s*[-•*]\s+', '', l), tytuly, baza_url, statusy or {})}</li>" for l in linie)
-            bloki.append(f"<ul>{pozycje}</ul>")
-        elif linie:
-            bloki.append("<p>" + "<br>".join(str(_linia(l, tytuly, baza_url, statusy or {})) for l in linie) + "</p>")
+        if linie:
+            bloki.append(_blok_html(linie, f))
     return Markup("".join(bloki))
 
 
@@ -78,8 +147,9 @@ def zrodla_odpowiedzi(tekst: str) -> dict[str, list[int]]:
     """Komplet książek i stron pod odpowiedzią."""
     wynik: dict[str, list[int]] = {}
     for m in ZNACZNIK_ZRODLA.finditer(tekst):
-        lista = wynik.setdefault(m[1], [])
-        lista += [s for s in strony(m[2]) if s not in lista]
+        for id, zapis_stron in pozycje(m[1]):
+            lista = wynik.setdefault(id, [])
+            lista += [n for n in strony(zapis_stron) if n not in lista]
     return {k: sorted(v) for k, v in wynik.items()}
 
 

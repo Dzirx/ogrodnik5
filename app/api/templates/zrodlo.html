@@ -2,17 +2,23 @@
 {% block title %}{{ k.tytul }}{% endblock %}
 {% block style %}
 <style>
-  .uklad-zrodla { display: grid; grid-template-columns: 12rem minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .zakladki { display: flex; gap: 1.2rem; border-bottom: 1px solid var(--ramka); margin: 0 0 1rem; }
+  .zakladki a { padding: 0.5rem 0; color: var(--przygaszony); text-decoration: none; border-bottom: 2px solid transparent; }
+  .zakladki a.aktywna { color: var(--akcent); border-bottom-color: var(--akcent); font-weight: 600; }
+  .uklad-zrodla { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 1rem; align-items: start; }
   .lista-stron { max-height: 70vh; overflow-y: auto; }
   .lista-stron a { display: block; padding: 0.3rem 0.6rem; text-decoration: none; color: var(--tekst); border-radius: 4px; font-size: 0.9rem; }
   .lista-stron a:hover { background: var(--tlo); }
   .lista-stron a.biezaca { background: var(--akcent-jasny); color: var(--akcent); font-weight: 600; }
   .lista-stron small { color: var(--uwaga); }
-  .tekst-strony { white-space: pre-wrap; font-size: 0.95rem; background: var(--tlo); padding: 0.8rem; border-radius: 6px; }
+  .tekst-strony { white-space: pre-wrap; font-size: 0.95rem; background: var(--tlo); padding: 0.8rem; border-radius: 6px; max-width: 52rem; }
   .uwaga-strony { color: var(--uwaga); font-size: 0.85rem; }
-  .przewodnik textarea { min-height: 60vh; font: 0.85rem/1.5 ui-monospace, monospace; }
+  .przewodnik { max-width: 60rem; }
+  .przewodnik textarea { min-height: 65vh; font: 0.85rem/1.5 ui-monospace, monospace; }
+  .stan-zapisu { color: var(--przygaszony); font-size: 0.85rem; }
+  .stan-zapisu.blad { color: var(--uwaga); }
   /* W jednej kolumnie lista stron nie może zasłonić tekstu strony. */
-  @media (max-width: 1100px) { .uklad-zrodla { grid-template-columns: 1fr; } .lista-stron { max-height: 10rem; } }
+  @media (max-width: 900px) { .uklad-zrodla { grid-template-columns: 1fr; } .lista-stron { max-height: 10rem; } }
 </style>
 {% endblock %}
 {% block content %}
@@ -25,9 +31,14 @@
   {% if k.status not in ("gotowa", "strony") %}· <strong>{{ k.status }}{% if k.blad %}: {{ k.blad }}{% endif %}</strong>{% endif %}
 </p>
 
+<nav class="zakladki">
+  <a href="/zrodla/{{ k.id }}?strona={{ biezaca }}{% if powrot %}&powrot={{ powrot|urlencode }}{% endif %}" class="{% if widok == 'strony' %}aktywna{% endif %}">Strony ({{ liczba }})</a>
+  <a href="/zrodla/{{ k.id }}?widok=przewodnik{% if powrot %}&powrot={{ powrot|urlencode }}{% endif %}" class="{% if widok == 'przewodnik' %}aktywna{% endif %}">Przewodnik</a>
+</nav>
+
+{% if widok == "strony" %}
 <div class="uklad-zrodla">
   <div class="karta">
-    <strong>Strony</strong>
     <div class="lista-stron">
       {% for n in range(1, liczba + 1) %}
       <a href="/zrodla/{{ k.id }}?strona={{ n }}{% if powrot %}&powrot={{ powrot|urlencode }}{% endif %}" class="{% if n == biezaca %}biezaca{% endif %}">Strona {{ n }}
@@ -46,17 +57,60 @@
     {% if tekst %}<div class="tekst-strony">{{ tekst }}</div>
     {% else %}<p class="podpowiedz">Na tej stronie nie ma tekstu (zdjęcia albo pusta strona).</p>{% endif %}
   </div>
-
-  <div class="karta przewodnik">
-    <strong>Przewodnik</strong>
-    <p class="podpowiedz">Agent czyta go na starcie pytania: mapa stron i słowa, pod którymi temat stoi w książce.
-      Popraw, jeśli wskazuje złe strony albo brakuje słów.</p>
-    <form method="post" action="/zrodla/{{ k.id }}/przewodnik">
-      <textarea name="tekst">{{ przewodnik }}</textarea>
-      <p style="display:flex; gap:0.5rem;"><button type="submit">Zapisz przewodnik</button>
-        <button type="submit" class="drugorzedny" form="generuj" onclick="return confirm('Wygenerować przewodnik od nowa? Twoje poprawki zostaną zastąpione.')">Wygeneruj od nowa</button></p>
-    </form>
-    <form id="generuj" method="post" action="/zrodla/{{ k.id }}/przewodnik/generuj"></form>
-  </div>
 </div>
+
+{% else %}
+<div class="karta przewodnik">
+  <p class="podpowiedz">Agent czyta przewodnik na starcie pytania, żeby wiedzieć, w których książkach
+    i pod jakimi słowami szukać. Popraw, jeśli wskazuje złe strony albo brakuje słów —
+    zmiany zapisują się same.</p>
+  <form method="post" action="/zrodla/{{ k.id }}/przewodnik" id="przewodnik">
+    <textarea name="tekst">{{ przewodnik }}</textarea>
+    <p style="display:flex; gap:0.8rem; align-items:center; margin-bottom:0;">
+      <span class="stan-zapisu" id="stan-zapisu">{% if przewodnik %}zapisany{% else %}brak przewodnika{% endif %}</span>
+      <button type="submit" class="drugorzedny" id="zapisz-recznie">Zapisz</button>
+      <button type="submit" class="drugorzedny" form="generuj"
+        onclick="return confirm('Wygenerować przewodnik od nowa? Twoje poprawki zostaną zastąpione.')">Wygeneruj od nowa</button>
+    </p>
+  </form>
+  <form id="generuj" method="post" action="/zrodla/{{ k.id }}/przewodnik/generuj"></form>
+</div>
+<script>
+  // Zapis sam, chwilę po ostatniej zmianie — jak zakres rozmowy w Pracowni.
+  // Przycisk zostaje dla przeglądarki bez skryptu; skrypt go chowa.
+  (function () {
+    var formularz = document.getElementById('przewodnik');
+    var pole = formularz.querySelector('textarea');
+    var stan = document.getElementById('stan-zapisu');
+    document.getElementById('zapisz-recznie').hidden = true;
+    var zegar = null, zapisany = pole.value;
+
+    function zapisz() {
+      if (pole.value === zapisany) { stan.textContent = 'zapisany'; return; }
+      var tekst = pole.value;
+      // fetch odmawia adresów z wpisanym loginem (http://user:haslo@host/).
+      var adres = new URL(formularz.action, location.href);
+      adres.username = ''; adres.password = '';
+      stan.className = 'stan-zapisu'; stan.textContent = 'zapisuję…';
+      fetch(adres.toString(), { method: 'POST', body: new FormData(formularz), credentials: 'include',
+                                headers: { 'X-Autozapis': '1' } })
+        .then(function (r) { return r.json(); })
+        .then(function (w) {
+          if (w.zapisano) { zapisany = tekst; stan.textContent = 'zapisano'; }
+          else { stan.className = 'stan-zapisu blad'; stan.textContent = w.powod || 'nie zapisano'; }
+        })
+        .catch(function () { stan.className = 'stan-zapisu blad'; stan.textContent = 'nie zapisano — sprawdź połączenie'; });
+    }
+    pole.addEventListener('input', function () {
+      stan.className = 'stan-zapisu'; stan.textContent = 'zmiany…';
+      clearTimeout(zegar); zegar = setTimeout(zapisz, 1200);
+    });
+    formularz.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(zegar); zapisz(); });
+    // Wyjście ze strony przed zapisem nie może zgubić poprawki.
+    window.addEventListener('beforeunload', function (e) {
+      if (pole.value !== zapisany) { e.preventDefault(); e.returnValue = ''; }
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

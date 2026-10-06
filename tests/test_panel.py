@@ -115,8 +115,15 @@ def test_biblioteka_dodaj_i_przetworz(panel):
 
 def test_ksiazka_i_przewodnik(panel):
     html = panel.get("/zrodla/ksiazka-a").text
-    assert "Rozstaw 80 x 40 cm" in html and "# przewodnik" in html
-    panel.post("/zrodla/ksiazka-a/przewodnik", data={"tekst": "# poprawiony"})
+    # Przewodnik w osobnej zakładce, nie przy każdej stronie.
+    assert "Rozstaw 80 x 40 cm" in html and "# przewodnik" not in html
+    assert "# przewodnik" in panel.get("/zrodla/ksiazka-a?widok=przewodnik").text
+    # Zapis automatyczny (fetch z nagłówkiem) dostaje JSON, nie przekierowanie.
+    r = panel.post("/zrodla/ksiazka-a/przewodnik", data={"tekst": "# poprawiony"}, headers={"X-Autozapis": "1"})
+    assert r.json() == {"zapisano": True}
+    assert (zapis.katalog("ksiazka-a") / "ksiazka.md").read_text() == "# poprawiony\n"
+    # Pusty przewodnik to raczej wypadek — nie nadpisuje.
+    assert panel.post("/zrodla/ksiazka-a/przewodnik", data={"tekst": "  "}, headers={"X-Autozapis": "1"}).status_code == 400
     assert (zapis.katalog("ksiazka-a") / "ksiazka.md").read_text() == "# poprawiony\n"
     assert panel.get("/zrodla/..%2Fetc").status_code == 404
 

@@ -39,7 +39,7 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,
   `AUTH_PASSWORD`, `ANSWER_MODEL`, `ANALYSIS_MODEL`; dopisane
-  `PRZEWODNIK_MODEL=gpt-5.4-mini`. Pozostałe zmienne z ogrodnik4 usunięte.
+  `PRZEWODNIK_MODEL=gpt-5.4-mini`, `ORKIESTRATOR_MODEL=gpt-5.4`. Pozostałe zmienne z ogrodnik4 usunięte.
   Lista wszystkich zmiennych: `.env.example`.
 - Ręczny wzorzec przewodnika (historia, z samego pdftotext, ma błędy):
   `data/zrodla/sulek-pomidory/ksiazka.wzorzec-reczny.md`. Agent go nie czyta.
@@ -59,8 +59,14 @@ Podjęte przez właściciela projektu świadomie:
   tylko zakresu, budżetu wywołań i zapisuje ślad. Pomyłki modelu poprawia
   redaktor.
 - **Spory** zgłasza agent podczas odpowiedzi (`zglos_spor`), zapis w SQLite,
-  pogrupowane po książkach; subagent dostaje spory swojej książki.
-- **Orkiestrator + subagent na książkę.**
+  pogrupowane po książkach; szukacz i agent dostają spory zaznaczonych książek.
+- **Agent** — trzy warianty przełączane `AGENT` w `.env`: `strony` (od 2026-10-06,
+  domyślny: planista `gpt-5.4-mini` ustala temat i formę, szukacz `gpt-5.4-mini`
+  wskazuje strony, kod wkleja ich dosłowny tekst, pisarz (`PISARZ_MODEL`, ostatnio
+  `gpt-5.5`) układa odpowiedź; proces.md, „Wariant strony"), `dwa` (szukacz
+  zbiera notatki własnymi słowami, pisarz układa tekst), `jeden` (jeden agent szuka,
+  czyta i pisze). `pomocnicy` (orkiestrator + subagent na książkę) usunięty
+  2026-10-06. Porównuje właściciel.
 - **Panel jak w ogrodnik4** (trzy ekrany); podgląd źródła to zwykły tekst
   strony, bez obrazu PDF.
 - **Parsowanie bierzemy z ogrodnik4** (`_extract_pages`, `ocr.py`,

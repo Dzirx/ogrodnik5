@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app import rozmowy, spory, worker
@@ -217,7 +217,7 @@ async def dodaj(tytul: str = Form(...), kategorie: str = Form(""), autor: str = 
 
 
 @router.get("/zrodla/{id}", response_class=HTMLResponse)
-def ksiazka(request: Request, id: str, strona: int = 1, powrot: str | None = None):
+def ksiazka(request: Request, id: str, strona: int = 1, powrot: str | None = None, widok: str = "strony"):
     meta = _ksiazka(id)
     liczba = meta.get("liczba_stron", 0)
     biezaca = min(max(strona, 1), liczba) if liczba else 0
@@ -228,6 +228,9 @@ def ksiazka(request: Request, id: str, strona: int = 1, powrot: str | None = Non
         "tekst": sciezka.read_text(encoding="utf-8") if sciezka.exists() else "",
         "tabela": biezaca in meta.get("strony_tabela", []), "ocr": biezaca in meta.get("strony_ocr", []),
         "przewodnik": przewodnik.read_text(encoding="utf-8") if przewodnik.exists() else "",
+        # Przewodnik dotyczy całej książki, nie strony — osobna zakładka, nie
+        # trzecia kolumna powtarzana przy każdej przeglądanej stronie.
+        "widok": "przewodnik" if widok == "przewodnik" else "strony",
         # Tylko powrót wewnątrz panelu — nie przekierowujemy na cudzy adres.
         "powrot": powrot if powrot and powrot.startswith("/rozmowy/") else None,
         **_wspolne(),
@@ -259,18 +262,25 @@ def przetworz(id: str):
 
 
 @router.post("/zrodla/{id}/przewodnik")
-def zapisz_przewodnik(id: str, tekst: str = Form(...)):
-    """Poprawka przewodnika przez redaktora — ponowne przetworzenie jej nie rusza."""
+def zapisz_przewodnik(request: Request, id: str, tekst: str = Form(...)):
+    """Poprawka przewodnika przez redaktora — ponowne przetworzenie jej nie rusza.
+    Zapisywana sama, chwilę po ostatniej zmianie (skrypt w zrodlo.html)."""
     _ksiazka(id)
+    if not tekst.strip():
+        # Puste pole to raczej wypadek przy zaznaczaniu niż decyzja —
+        # pusty przewodnik agent odczytałby jako „brak mapy".
+        return JSONResponse({"zapisano": False, "powod": "pusty przewodnik nie został zapisany"}, status_code=400)
     (zapis.katalog(id) / "ksiazka.md").write_text(tekst.strip() + "\n", encoding="utf-8")
-    return RedirectResponse(f"/zrodla/{id}", status_code=303)
+    if request.headers.get("X-Autozapis"):
+        return JSONResponse({"zapisano": True})
+    return RedirectResponse(f"/zrodla/{id}?widok=przewodnik", status_code=303)
 
 
 @router.post("/zrodla/{id}/przewodnik/generuj")
 def generuj_przewodnik(id: str):
     _ksiazka(id)
     worker.zlec("przewodnik", id)
-    return RedirectResponse(f"/zrodla/{id}", status_code=303)
+    return RedirectResponse(f"/zrodla/{id}?widok=przewodnik", status_code=303)
 
 
 @router.get("/zrodla/{id}/plik")

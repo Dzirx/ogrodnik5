@@ -49,12 +49,15 @@
 {% block style %}
 <style>
   /* Trzy kolumny: wątki, rozmowa, podgląd strony. Każda przewija się osobno. */
-  .uklad { display: grid; grid-template-columns: 15rem minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; height: calc(100vh - 7rem); }
+  /* Wiersz na całą wysokość: z auto rósłby razem z listą wątków i wypychał stronę. */
+  .uklad { display: grid; grid-template-columns: 15rem minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1rem; height: calc(100vh - 7rem); }
   .uklad.bez-podgladu { grid-template-columns: 15rem minmax(0, 1fr); }
   .kolumna { background: var(--karta); border: 1px solid var(--ramka); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
   .kolumna > .naglowek { padding: 0.7rem 1rem; border-bottom: 1px solid var(--ramka); font-weight: 600; font-size: 0.9rem; }
   .kolumna > .tresc { padding: 1rem; }
   .kolumna > .tresc, .kolumna > .watki { overflow-y: auto; min-height: 0; }
+  /* Pasek zawsze widoczny: nakładkowe paski systemu chowają się i lista wygląda na uciętą. */
+  .kolumna > .tresc, .kolumna > .watki { scrollbar-width: thin; scrollbar-color: var(--przygaszony) var(--tlo); }
   .kolumna > .nad-watkami { overflow: visible; flex: none; }
   .kolumna > .przewijana { flex: 1; }
   .stopka-rozmowy { border-top: 1px solid var(--ramka); padding: 0.8rem 1rem; background: var(--karta); border-radius: 0 0 8px 8px; }
@@ -94,10 +97,10 @@
   .przyciski-okna { display: flex; gap: 0.5rem; margin-bottom: 0; }
   .tekst-poprawiony { border-left: 3px solid var(--akcent); padding-left: 0.7rem; }
   /* Znacznik źródła: tytuł książki i strony jako linki do podglądu. */
-  .znacznik { font-size: 0.8rem; color: var(--przygaszony); background: var(--akcent-jasny); border-radius: 4px; padding: 0 0.35rem; white-space: nowrap; }
+  .znacznik { font-size: 0.72rem; color: var(--przygaszony); background: var(--akcent-jasny); border-radius: 4px; padding: 0 0.3rem; white-space: nowrap; vertical-align: super; line-height: 1; }
   .znacznik a { color: var(--akcent); }
   /* Ustalenie redakcji: numer sporu z etykietą, nie odnośnik do książki. */
-  .spor-znacznik { font-size: 0.75rem; color: var(--uwaga); background: var(--uwaga-tlo); border-radius: 4px; padding: 0 0.35rem; text-decoration: none; white-space: nowrap; }
+  .spor-znacznik { vertical-align: super; line-height: 1; font-size: 0.72rem; color: var(--uwaga); background: var(--uwaga-tlo); border-radius: 4px; padding: 0 0.35rem; text-decoration: none; white-space: nowrap; }
   .spor-znacznik.rozstrzygniety { color: var(--akcent); background: var(--akcent-jasny); }
   .spor-znacznik.odrzucony { color: var(--przygaszony); background: var(--tlo); }
   .zrodla-odpowiedzi { font-size: 0.85rem; color: var(--przygaszony); margin: 0.4rem 0 0; }
@@ -112,7 +115,10 @@
   .uwaga-strony { color: var(--uwaga); font-size: 0.85rem; }
   .czekam { color: var(--przygaszony); font-style: italic; }
   .blad-odpowiedzi { color: var(--uwaga); }
-  @media (max-width: 1100px) { .uklad, .uklad.bez-podgladu { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) {
+    .uklad, .uklad.bez-podgladu { grid-template-columns: 1fr; grid-template-rows: none; height: auto; }
+    .kolumna > .watki { max-height: 14rem; }
+  }
 </style>
 {% endblock %}
 {% block content %}
@@ -170,7 +176,7 @@
               {% set uzyte = zrodla_odpowiedzi(tekst) %}
               {% if uzyte %}
               <p class="zrodla-odpowiedzi">Źródła:
-                {%- for id, numery in uzyte.items() %} {{ tytuly.get(id, id) }},
+                {%- for id, numery in uzyte.items() %} {% if uzyte|length > 1 %}{{ "¹²³⁴⁵⁶⁷⁸⁹"[loop.index0] if loop.index0 < 9 else loop.index }}{% endif %}{{ tytuly.get(id, id) }},
                   s. {% for n in numery %}<a href="?podglad={{ id }}:{{ n }}">{{ n }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if not loop.last %} ·{% endif %}
                 {%- endfor %}
               </p>
