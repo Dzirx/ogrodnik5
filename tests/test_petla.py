@@ -307,3 +307,28 @@ def test_wariant_strony_blad_planisty_nie_blokuje_odpowiedzi(monkeypatch, tmp_pa
     assert wynik.tekst.startswith("Pomidor lubi ciepło")
     assert zapytania[1]["messages"][1]["content"] == "Co lubi pomidor?"      # bez briefu
     assert any(z.get("kto") == "planista" and "blad" in z for z in wynik.slad.zdarzenia)
+
+
+def test_pisarz_uzywa_promptu_z_panelu_i_zapisuje_to_w_sladzie(model, monkeypatch, tmp_path):
+    from app import config, prompty
+    from app.agent import agent
+
+    monkeypatch.setattr(config, "AGENT", "strony")
+    monkeypatch.setattr(config, "PLANISTA", False)
+    a, _ = _dwie_ksiazki(monkeypatch, tmp_path)
+
+    def odpowiedz():
+        kolejka, zapytania = model
+        kolejka += [_odp(wywolania=[_Wywolanie("1", "szukaj", {"fraza": "pomidor"})]),
+                    _odp(f"STRONY: {a} 1"), _odp("Gotowe.")]
+        wynik = agent.odpowiedz([a], "Co lubi pomidor?")
+        return zapytania[-1]["messages"][0]["content"], wynik.slad
+
+    system, slad = odpowiedz()
+    assert system == agent.PISARZ_STRON
+    assert {"kto": "pisarz", "prompt": "domyslny"}.items() <= next(z for z in slad.zdarzenia if z.get("kto") == "pisarz").items()
+
+    prompty.zapisz(prompty.PISARZ_STRONY, "Piszesz krótko. {nawiasy} zostają bez zmian.")
+    system, slad = odpowiedz()
+    assert system == "Piszesz krótko. {nawiasy} zostają bez zmian."          # bez .format — klamry są bezpieczne
+    assert next(z for z in slad.zdarzenia if z.get("kto") == "pisarz")["prompt"] == "wlasny"

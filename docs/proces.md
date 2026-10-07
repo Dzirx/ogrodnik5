@@ -678,6 +678,16 @@ i tak nie widział książek, tylko tekst zinterpretowany przez tańszy model.
   — pisarz wymyślił `[U1]` (inny spór niż omawiany), (3) liczby i terminy ze stron przy
   pytaniach o podziały i łączenie tego samego podziału z dwóch książek w jedno zdanie,
   (4) usunięty przykład „Ze względu na…” z zakazu (podpowiadał zwrot).
+- **Prompt pisarza w panelu** (2026-10-07): strona „Prompt pisarza” (`/prompt-pisarza`)
+  pozwala redaktorowi zmienić system prompt pisarza wariantu `strony`. Domyślny tekst
+  zostaje w kodzie (`agent.PISARZ_STRON`); zmiany idą do SQLite (tabela `prompty`, tylko
+  dopisywanie — historia zostaje, „Wczytaj” wkłada starszą wersję do pola, „Przywróć
+  domyślny” dopisuje wpis z `NULL`). Agent czyta bieżący prompt przy każdej odpowiedzi
+  (`prompty.aktualny`), więc zmiana działa od następnego pytania bez restartu, a w śladzie
+  jest zdarzenie `pisarz` z polem `prompt: domyslny | wlasny`. Kod nie ocenia treści
+  promptu, sprawdza tylko, że nie jest pusty ani dłuższy niż 30 000 znaków. Prompt nie
+  przechodzi przez `.format`, więc klamry w tekście są bezpieczne. Dotyczy tylko wariantu
+  `strony`; prompty `dwa`, `jeden`, szukacza i planisty zostają w kodzie.
 - `ORKIESTRATOR_MODEL` zostaje w konfiguracji tylko dla wariantu `jeden` i jako domyślny
   model kontroli sporów; `SUBAGENT_MODEL` i limity rund pomocników usunięte.
 

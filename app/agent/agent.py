@@ -8,7 +8,7 @@ import itertools
 import re
 from dataclasses import dataclass
 
-from app import config, spory
+from app import config, prompty, spory
 from app.agent import narzedzia
 from app.agent import petla as _petla
 from app.agent.petla import Narzedzie, Slad, _wykonaj, petla
@@ -670,8 +670,11 @@ def _odpowiedz_strony(ksiazki: list[str], pytanie: str, historia: list[dict] | N
         czesci.append("UWAGI SZUKACZA:\n" + "\n".join(inne))
     if not czesci:
         czesci.append("(szukacz nie wskazał żadnych stron)")
+    # Prompt pisarza można zmienić w panelu (prompty.py); w śladzie zostaje, który poszedł.
+    prompt_pisarza, skad_prompt = prompty.aktualny(prompty.PISARZ_STRONY, PISARZ_STRON)
+    slad.zdarzenie(kto="pisarz", prompt=skad_prompt)
     wiadomosci_pisarza = [
-        {"role": "system", "content": PISARZ_STRON},
+        {"role": "system", "content": prompt_pisarza},
         *(historia or []),
         {"role": "user", "content": "PYTANIE REDAKTORA:\n" + pytanie
                                     + (f"\n\n{forma}" if forma else "") + "\n\n" + "\n\n".join(czesci)},

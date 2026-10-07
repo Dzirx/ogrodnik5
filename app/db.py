@@ -54,6 +54,16 @@ CREATE TABLE IF NOT EXISTS wiadomosci (
 CREATE INDEX IF NOT EXISTS wiadomosci_status ON wiadomosci(status);
 -- Wgrywanie i przewodnik w tle — tekst stron, OCR i model nie mieszczą się
 -- w żądaniu HTTP.
+-- Prompty edytowane w panelu: tylko dopisujemy, bieżący to ostatni wiersz klucza.
+-- tekst NULL = „wróć do domyślnego z kodu".
+CREATE TABLE IF NOT EXISTS prompty (
+  id        INTEGER PRIMARY KEY,
+  klucz     TEXT NOT NULL,
+  tekst     TEXT,
+  zapisano  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS prompty_klucz ON prompty(klucz, id);
+
 CREATE TABLE IF NOT EXISTS zadania (
   id        INTEGER PRIMARY KEY,
   rodzaj    TEXT NOT NULL,                             -- przetworz | przewodnik

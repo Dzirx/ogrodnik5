@@ -35,6 +35,7 @@ Następca `~/projekt/ogrodnik4` (RAG z wektorami — porzucony).
   Istniejący spór rozpoznawany po parze (książka, strona) — zaakceptowane.
 - Etap 6 gotowy (2026-10-03): panel `app/api/`, proces roboczy `app/worker.py`.
   Lokalnie: `uvicorn app.api.main:app` + `python -m app.worker`.
+- Prompt pisarza edytowalny w panelu (`/prompt-pisarza`, tabela `prompty`, 2026-10-07).
 - Następny krok: etap 7 (serwer, docker-compose).
 - `.env` skopiowany z ogrodnik4 (2026-10-02) — nie odczytuj go ani nie
   wyświetlaj. Zostały w nim: `OPENAI_API_KEY`, `AUTH_USERNAME`,

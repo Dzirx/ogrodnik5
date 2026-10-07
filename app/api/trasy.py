@@ -1,4 +1,4 @@
-"""Trasy panelu. Trzy ekrany: Pracownia, Biblioteka, Do ustalenia.
+"""Trasy panelu. Trzy ekrany: Pracownia, Biblioteka, Do ustalenia (+ prompt pisarza).
 
 Redaktor ma robić trzy rzeczy: dodać książkę, zapytać, rozstrzygnąć spór.
 Wygląd i układ z ogrodnik4; dane nowe — książki w plikach, reszta w SQLite."""
@@ -6,12 +6,14 @@ Wygląd i układ z ogrodnik4; dane nowe — książki w plikach, reszta w SQLite
 import json
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app import rozmowy, spory, worker
+from app import config, prompty, rozmowy, spory, worker
+from app.agent import agent
 from app.api import widok
 from app.ingest import zapis
 
@@ -327,3 +329,35 @@ def rozstrzygnij(spor_id: int, wybor: str = Form(...), wlasna: str = Form(""), p
 
 
 templates.env.filters["fromjson"] = lambda s: json.loads(s) if s else None
+
+
+# ---------- Prompt pisarza ----------
+
+@router.get("/prompt-pisarza", response_class=HTMLResponse)
+def prompt_pisarza(request: Request, wersja: int | None = None, zapisano: int = 0, blad: str = ""):
+    """Edycja system promptu pisarza. Działa od następnego pytania; ?wersja=ID wczytuje
+    do pola starszą wersję z historii (zapis dopiero po kliknięciu „Zapisz")."""
+    aktualny, skad = prompty.aktualny(prompty.PISARZ_STRONY, agent.PISARZ_STRON)
+    pole = aktualny
+    if wersja is not None and (w := prompty.wersja(prompty.PISARZ_STRONY, wersja)):
+        pole = w["tekst"] if w["tekst"] is not None else agent.PISARZ_STRON
+    return templates.TemplateResponse(request, "prompt.html", {
+        "strona": "prompt", "pole": pole, "skad": skad, "wariant": config.AGENT,
+        "historia": prompty.historia(prompty.PISARZ_STRONY), "zapisano": bool(zapisano), "blad": blad,
+        "maks": prompty.MAKS_ZNAKOW, "model": config.PISARZ_MODEL, **_wspolne(),
+    })
+
+
+@router.post("/prompt-pisarza")
+def zapisz_prompt_pisarza(tekst: str = Form("")):
+    try:
+        prompty.zapisz(prompty.PISARZ_STRONY, tekst)
+    except ValueError as e:
+        return RedirectResponse(f"/prompt-pisarza?blad={quote(str(e))}", status_code=303)
+    return RedirectResponse("/prompt-pisarza?zapisano=1", status_code=303)
+
+
+@router.post("/prompt-pisarza/domyslny")
+def przywroc_prompt_pisarza():
+    prompty.przywroc_domyslny(prompty.PISARZ_STRONY)
+    return RedirectResponse("/prompt-pisarza?zapisano=1", status_code=303)

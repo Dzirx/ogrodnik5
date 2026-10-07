@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Prompt pisarza{% endblock %}
+{% block style %}
+<style>
+  .prompt-pisarza { max-width: 62rem; }
+  .prompt-pisarza textarea { min-height: 60vh; font: 0.85rem/1.5 ui-monospace, monospace; }
+  .przyciski { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; margin-top: 0.8rem; }
+  .komunikat { padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 1rem; }
+  .komunikat.ok { background: var(--akcent-jasny); color: var(--akcent); }
+  .komunikat.blad { background: var(--uwaga-tlo); color: var(--uwaga); }
+  .historia-promptu { margin-top: 1.5rem; }
+  .historia-promptu li { margin-bottom: 0.3rem; }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Prompt pisarza</h1>
+<p class="podpowiedz">To instrukcja dla modelu, który układa odpowiedź ze stron wskazanych przez szukacza
+  (model: <code>{{ model }}</code>). Zmiana działa od <strong>następnego pytania</strong>, bez restartu;
+  stare odpowiedzi się nie zmieniają. W śladzie każdej odpowiedzi zostaje informacja, czy użyto promptu
+  własnego, czy domyślnego.</p>
+<p class="podpowiedz">Pamiętaj: pisarz dostaje strony z nagłówkami <code>[id-książki s. N]</code> i na tej podstawie
+  stawia znaczniki. Jeśli usuniesz z promptu zasady o znacznikach, źródła pod odpowiedzią przestaną się budować.
+  {% if wariant != "strony" %}<br><strong>Uwaga:</strong> aktywny wariant agenta to „{{ wariant }}” — ten prompt
+  dotyczy wariantu „strony” i nie jest teraz używany.{% endif %}</p>
+
+{% if zapisano %}<div class="komunikat ok">Zapisano. Działa od następnego pytania.</div>{% endif %}
+{% if blad %}<div class="komunikat blad">{{ blad }}</div>{% endif %}
+
+<div class="karta prompt-pisarza">
+  <p class="podpowiedz" style="margin-top:0">Obecnie używany: <strong>{{ "własny" if skad == "wlasny" else "domyślny (z kodu)" }}</strong>
+    · najwyżej {{ maks }} znaków</p>
+  <form method="post" action="/prompt-pisarza">
+    <textarea name="tekst" required>{{ pole }}</textarea>
+    <div class="przyciski">
+      <button type="submit">Zapisz</button>
+      <button type="submit" class="drugorzedny" form="domyslny"
+        onclick="return confirm('Wrócić do domyślnego promptu z kodu? Twoja wersja zostanie w historii.')">Przywróć domyślny</button>
+    </div>
+  </form>
+  <form id="domyslny" method="post" action="/prompt-pisarza/domyslny"></form>
+</div>
+
+{% if historia %}
+<div class="historia-promptu">
+  <h2>Historia zmian</h2>
+  <p class="podpowiedz">„Wczytaj” tylko wkłada wersję do pola powyżej — zapisuje dopiero przycisk „Zapisz”.</p>
+  <ul>
+    {% for h in historia %}
+    <li>{{ h.zapisano }} UTC — {% if h.tekst is none %}przywrócono domyślny{% else %}własny prompt ({{ h.tekst|length }} znaków){% endif %}
+      · <a href="/prompt-pisarza?wersja={{ h.id }}">wczytaj</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
